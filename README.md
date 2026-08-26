@@ -61,6 +61,18 @@ lifecycle rides on physical keys.
 
 https://github.com/user-attachments/assets/478ed846-4200-461d-af6a-6f2bb6efc04d
 
+### And the other species: a standalone intent
+
+A booklet is a session; an intent is **one press, one run, no
+session**. Here a market-board intent fetches three boards of quotes
+and the day's headlines, renders an offline page, and hands back a
+receipt — duration, calls, tokens.
+
+<!-- INTENT TRIGGER VIDEO: drag readme-intent-trigger.mp4 here -->
+
+<!-- CONSOLIDATION VIDEO slot: readme-consolidation.mp4 — narration
+     to be written once the clip's story is confirmed -->
+
 ## Install
 
 Windows · Python ≥ 3.12 · [Claude Code CLI](https://claude.com/claude-code)
