@@ -4,7 +4,13 @@
 Talk once — it compiles how you use this machine into push-button
 assets. From then on, it's a button.
 
-<!-- HERO VIDEO: in the GitHub web editor, drag
+<!-- 
+https://github.com/user-attachments/assets/7a970b55-3b5a-45a7-b1c5-10ac8f6a728e
+
+
+https://github.com/user-attachments/assets/478ed846-4200-461d-af6a-6f2bb6efc04d
+
+ VIDEO: in the GitHub web editor, drag
      readme-embed-usage.mp4 here (it uploads as a playable inline
      embed; readme-embed-deck.mp4 is the alternate). -->
 
