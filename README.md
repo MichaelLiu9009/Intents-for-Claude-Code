@@ -1,3 +1,4 @@
+
 # Intents for Claude Code
 
 **An input method for agency.**
@@ -23,7 +24,8 @@ from a one-sentence wish, then running it from the deck.
 Tell the sidecar, in plain language, what you want as buttons. That is
 the entire input — no config files, no prompt engineering.
 
-<!-- STEP 1 VIDEO: drag readme-step1.mp4 here in the GitHub web editor -->
+<!-- STEP 1 VIDEO: drag readme-step1.mp4 here in the GitHub web editor --> https://github.com/user-attachments/assets/1f8f7177-0377-4fb9-a12e-d297311e2990
+
 
 ### 2 · It grounds your customization against your local environment
 
@@ -31,14 +33,14 @@ The agent probes the machine itself — screens, devices, installed
 tools, your folder layout — and asks only the real forks, each with
 its tradeoffs spelled out.
 
-<!-- STEP 2 VIDEO: drag readme-step2.mp4 here -->
+<!-- STEP 2 VIDEO: drag readme-step2.mp4 here --> https://github.com/user-attachments/assets/2ea31d76-5f0b-43f7-aded-518d4e0e7151
 
 ### 3 · It implements a tested solution
 
 Declarations, member steps, and tool scripts get written — and
 live-fired against this machine before anything is submitted.
 
-<!-- STEP 3 VIDEO: drag readme-step3.mp4 here -->
+<!-- STEP 3 VIDEO: drag readme-step3.mp4 here --> https://github.com/user-attachments/assets/6c883e45-530c-4e8c-90ef-769b7d8c65c2
 
 ### 4 · Register — the keyset compiles into the Elgato app
 
@@ -46,7 +48,7 @@ Registration raises one approval card, and that click is yours by
 design. On approve the whole booklet goes live and its key set
 auto-compiles into the Stream Deck app, ready to drag onto your deck.
 
-<!-- STEP 4 VIDEO: drag readme-step4.mp4 here -->
+<!-- STEP 4 VIDEO: drag readme-step4.mp4 here --> https://github.com/user-attachments/assets/89cff055-dd37-4d2c-baa2-6ca746b69135
 
 ### 5 · Start using it
 
