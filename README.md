@@ -68,7 +68,7 @@ session**. Here a market-board intent fetches three boards of quotes
 and the day's headlines, renders an offline page, and hands back a
 receipt — duration, calls, tokens.
 
-<!-- INTENT TRIGGER VIDEO: drag readme-intent-trigger.mp4 here -->
+https://github.com/user-attachments/assets/64ac4ae5-403e-42ce-ad1c-7517d05b96e8
 
 ### Revision is the same conversation
 
@@ -78,7 +78,7 @@ so. The sidecar revises the declarations, re-registers the booklet
 whole, and one approval card later the improved version is live.
 Edit-and-re-register is the normal loop, not an exception.
 
-<!-- CONSOLIDATION VIDEO: drag readme-consolidation.mp4 here -->
+https://github.com/user-attachments/assets/a887efb4-1496-4fe1-b6db-a718e6d78302
 
 ## Install
 
