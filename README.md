@@ -51,8 +51,14 @@ Requirements:
 git clone https://github.com/MichaelLiu9009/Intents-for-Claude-Code.git
 cd Intents-for-Claude-Code
 pip install -e .
+intentos seed --workspace <dir>
 intentos run --workspace <dir> --http 9700 --ws 9701
 ```
+
+(`seed` is optional but goes **before** `run` — it writes the registry
+directly, and a running engine compiles its key sets at boot, so
+templates seeded afterwards stay invisible until you restart the
+engine once. Details under "Cold-start templates" below.)
 
 (`intentos` is the installed console command; `python -m commander`
 is the equivalent module form — the import package keeps its
@@ -84,6 +90,13 @@ Cold-start templates and your first intent:
 ```
 intentos seed --workspace <dir>
 ```
+
+Seed lands the templates **provisioned** (engine property — they skip
+the human approval chain) by writing the workspace registry directly.
+The engine only re-compiles its roster on its own registration events,
+so if it was already running when you seeded, restart it once
+(`intentos stop --ws 9701` → `intentos run …`) and the two keys
+appear.
 
 This seeds the two built-in templates — **timecheck** (a standalone
 intent: fetch the time, report it in chat) and **translator** (an

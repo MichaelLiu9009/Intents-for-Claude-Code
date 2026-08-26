@@ -81,6 +81,8 @@ the normal loop, not an exception.
 The two seeded examples (`intentos seed` — **timecheck** and
 **translator**) exist precisely so you can open their folders and see
 what a finished registration looks like before you make your own.
+(Seed before starting the engine; seeded while it was running, they
+show up after one engine restart — see the README.)
 
 <!-- screenshot: registration approval card (docs/img/approve-card.png) -->
 
