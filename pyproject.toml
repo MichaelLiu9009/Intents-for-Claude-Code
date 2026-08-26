@@ -1,0 +1,35 @@
+[project]
+name = "intents-for-claude-code"
+version = "0.1.0"
+description = "Intents for Claude Code — compile your habits into push-button intents, procedures and protocols on top of the Claude Code harness (engine's internal name: IntentOS)"
+requires-python = ">=3.12"
+dependencies = [
+    "websockets>=12",
+    "pywinpty>=2; sys_platform == 'win32'",
+]
+
+[project.scripts]
+# Public command name = the engine's internal name (ruling 2026-08-24:
+# README must not teach `python -m commander` — the lineage module name
+# stays available as the compat form until the 0.x package rename).
+intentos = "commander.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+# panel = flow/hub pages; deckplugin = the Stream Deck plugin.js;
+# kernel/procs = built-in procedure implementations — all three are
+# runtime data files read by path, and a missing one silently breaks a
+# feature in the distributed package (distribution audit 2026-08-23)
+commander = ["panel/*", "deckplugin/*", "kernel/procs/*"]
+
+# Note: the import package is still `commander` (engineering lineage).
+# Public / distribution name = intents-for-claude-code (ruling
+# 2026-08-24: the project name drops the "OS"; the engine keeps
+# IntentOS as its internal name). Renaming the import package is on
+# the 0.x audit list.

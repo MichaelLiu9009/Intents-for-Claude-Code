@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IntentOS</title>
+<link rel="stylesheet" href="/xterm.css">
+<style>
+  :root {
+    --bg: #101318; --panel: #171b22; --edge: #232a35;
+    --ink: #d7dde6; --dim: #8a94a3; --accent: #7a8cff;
+    --ok: #3fa76b; --warn: #d09a3a; --bad: #cf5a5a; --ask: #5a8fd0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 13px/1.5 "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; background: var(--panel);
+    border-bottom: 1px solid var(--edge); flex: none;
+  }
+  header .dot { width: 9px; height: 9px; border-radius: 50%;
+    background: var(--dim); flex: none; }
+  header .dot.live { background: var(--ok); }
+  header h1 { font-size: 15px; font-weight: 600; letter-spacing: .2px; }
+  header .seat { color: var(--dim); font-size: 11px; }
+  header .brand { margin-left: auto; color: var(--dim);
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+  header button {
+    background: none; border: 1px solid var(--edge); color: var(--dim);
+    border-radius: 6px; padding: 3px 10px; font-size: 11px;
+    cursor: pointer;
+  }
+  header button:hover { color: var(--ink); border-color: var(--accent); }
+  .card {
+    background: var(--panel); border: 1px solid var(--edge);
+    border-left: 3px solid var(--accent); border-radius: 8px;
+    padding: 10px 12px; width: 100%;
+  }
+  .card.closed { opacity: .55; }
+  .card.perm, .card.approval { border-left-color: var(--warn); }
+  .card.ask { border-left-color: var(--ask); }
+  .card.offer { border-left-color: var(--accent); }
+  .card.stall, .card.info { border-left-color: var(--dim); }
+  .card h3 { font-size: 13px; margin-bottom: 5px; }
+  .card pre {
+    font: 12px/1.45 Consolas, monospace; white-space: pre-wrap;
+    word-break: break-word; color: var(--dim); max-height: 180px;
+    overflow-y: auto;
+  }
+  .card .opts { display: flex; gap: 6px; margin-top: 8px;
+    flex-wrap: wrap; }
+  .card .opts button {
+    background: #202634; color: var(--ink); border: 1px solid var(--edge);
+    border-radius: 6px; padding: 5px 12px; font-size: 12px;
+    cursor: pointer;
+  }
+  .card .opts button:first-child { border-color: var(--accent); }
+  .card .opts button:hover { background: var(--accent); color: #0d1017; }
+  .card.gate { border-left-color: var(--warn); }
+  .card .cline { display: flex; gap: 6px; margin-top: 8px; }
+  .card .cline input {
+    flex: 1; background: #0e1116; color: var(--ink);
+    border: 1px solid var(--edge); border-radius: 6px;
+    padding: 5px 10px; font-size: 12px; outline: none;
+  }
+  .card .cline input:focus { border-color: var(--accent); }
+  header .task { color: var(--dim); font-size: 11px;
+    font-variant-numeric: tabular-nums; }
+  /* status words share one color rule wherever they appear —
+     the taskline AND the drawer (audit 2026-08-25 §4-other: the
+     drawer rows reused the classes but the selectors were scoped
+     to header only, so its status words rendered colorless) */
+  .st-running { color: var(--accent); }
+  .st-gated, .st-queued { color: var(--warn); }
+  .st-failed, .st-timeout, .st-cancelled { color: var(--bad); }
+  .st-done { color: var(--ok); }
+  #stream { flex: 1 1 0; overflow-y: auto; padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 6px; }
+  .line { max-width: 92%; }
+  .line .t { color: #525b68; font-size: 10px; margin-right: 6px; }
+  .line.user { align-self: flex-end; text-align: right; }
+  .line.user .msg { background: #26304a; border-radius: 10px 10px 2px
+    10px; padding: 6px 10px; display: inline-block; text-align: left;
+    white-space: pre-wrap; }
+  .line.engine .msg { color: var(--dim); font-style: italic;
+    white-space: pre-wrap; }
+  .line.feed .msg { color: var(--dim); font-size: 12px; }
+  #ime { flex: none; display: none; gap: 6px; flex-wrap: wrap;
+    padding: 6px 12px 0; }
+  #ime.has { display: flex; }
+  #ime button {
+    background: #1c2230; color: var(--ink); border: 1px solid var(--edge);
+    border-radius: 999px; padding: 3px 12px; font-size: 12px;
+    cursor: pointer;
+  }
+  #ime button:hover { border-color: var(--accent); color: #fff; }
+  #ime button.on { border-color: var(--accent); color: #fff;
+    background: #26304a; }
+  #pin { display: none; align-items: center; gap: 6px; flex: none;
+    background: #26304a; border: 1px solid var(--accent);
+    border-radius: 999px; padding: 3px 12px; font-size: 12px;
+    color: #fff; cursor: pointer; }
+  #pin.has { display: flex; }
+  #tasks { flex: none; display: none; flex-direction: column; gap: 4px;
+    padding: 6px 12px; border-bottom: 1px solid var(--edge);
+    max-height: 40%; overflow-y: auto; background: var(--panel); }
+  #tasks.open { display: flex; }
+  #tasks .trow { display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--dim);
+    font-variant-numeric: tabular-nums; }
+  #tasks .trow b { color: var(--ink); font-weight: 500; }
+  #tasks .trow button { background: none; border: 1px solid var(--edge);
+    color: var(--dim); border-radius: 6px; padding: 1px 8px;
+    font-size: 11px; cursor: pointer; }
+  #tasks .trow button:hover { color: var(--ink);
+    border-color: var(--accent); }
+  #term-wrap { flex: none; display: none; border-top: 1px solid
+    var(--edge); background: #0c0e12; }
+  #term-wrap.open { display: block; height: 46%; }
+  #term { height: 100%; padding: 4px 6px; }
+  footer { flex: none; display: flex; gap: 8px; padding: 10px 12px;
+    background: var(--panel); border-top: 1px solid var(--edge); }
+  footer input {
+    flex: 1; background: #0e1116; color: var(--ink);
+    border: 1px solid var(--edge); border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; outline: none;
+  }
+  footer input:focus { border-color: var(--accent); }
+  footer button {
+    background: var(--accent); color: #0d1017; border: none;
+    border-radius: 8px; padding: 0 16px; font-weight: 600;
+    cursor: pointer;
+  }
+  #offline { position: fixed; inset: 0; display: none;
+    background: rgba(13,16,23,.88); z-index: 9; align-items: center;
+    justify-content: center; color: var(--dim); font-size: 14px; }
+  #offline.show { display: flex; }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="dot"></span>
+  <h1 id="title">protocol</h1>
+  <span class="seat" id="seatlabel"></span>
+  <span class="task" id="taskline" title="Click for the task ledger
+(retry / cancel live there)" style="cursor:pointer"></span>
+  <button id="termbtn" title="Terminal drawer — answer the trust wizard
+or native permission dialogs here">Terminal</button>
+  <span class="brand" id="brand">INTENTOS</span>
+</header>
+<div id="tasks"></div>
+<div id="stream"></div>
+<div id="ime" title="This protocol's members — click to run one
+(bracket must be open)"></div>
+<div id="term-wrap"><div id="term"></div></div>
+<footer>
+  <span id="pin" title="Pinned — Enter fires it with the typed input;
+click or Esc to unpin"></span>
+  <input id="box" autocomplete="off">
+  <button id="send">Send</button>
+</footer>
+<div id="offline">engine offline — retrying…</div>
+<script src="/xterm.js"></script>
+<script>
+(() => {
+  // Unified panel for all seats (user ruling 2026-08-23 night: observe
+  // folded in, all panel functions unified). ?i=<seat> = that seat's
+  // panel; no ?i = the engine panel (sidecar terminal + sidecar/x·solo
+  // card stream + human gate + standalone intent entries).
+  const SEAT = new URLSearchParams(location.search).get("i") || "";
+  const EPLANE = !SEAT;                 // the engine panel
+  const SOLO = "x·solo";
+  const PNAME = EPLANE ? "engine" : SEAT.replace(/^x·/, "");
+  document.title = PNAME + " · IntentOS";
+  document.getElementById("title").textContent = PNAME;
+  document.getElementById("seatlabel").textContent =
+    EPLANE ? "sidecar · x·solo" : SEAT;
+  if (window.self !== window.top)       // inside the hub, keep only its own shell label
+    document.getElementById("brand").style.display = "none";
+  // Ownership rule: the card stream shows by owning instance — the
+  // engine panel takes sidecar/x·solo/global, a booklet panel takes
+  // only its own
+  const foreign = i => typeof i === "string" && i.startsWith("x·")
+                    && i !== SOLO;
+  const own = i => EPLANE ? !foreign(i) : i === SEAT;
+  const seatArgs = () => EPLANE ? {} : {instance: SEAT};
+
+  const streamEl = document.getElementById("stream");
+  const imeEl = document.getElementById("ime");
+  const dot = document.getElementById("dot");
+  const offline = document.getElementById("offline");
+  let ws = null, term = null, termOpen = false, cliSubbed = false;
+  let closing = false;   // flow_close received — stop reconnecting
+
+  // txt, not esc (audit 2026-08-25 §4-interpretability): this
+  // never escaped anything — every sink is textContent/title,
+  // which don't parse HTML, so coercion is all that's needed.
+  // The old name promised HTML-escaping it didn't do; anyone
+  // adding an innerHTML sink must escape there, not lean here.
+  const txt = s => String(s ?? "");
+
+  function streamAdd(el) {
+    streamEl.appendChild(el);
+    streamEl.scrollTop = streamEl.scrollHeight;
+    // Soft cap (audit 2026-08-25): the trim used to be
+    // unconditional, so it could evict a card or human gate that
+    // was still WAITING on the user — while cardEls/gateEls kept
+    // pointing at the detached node, after which renderCard's
+    // replaceWith silently no-ops and renderGates' has() guard
+    // blocks re-creation. The card then stayed invisible and
+    // unanswerable for the life of the page, reconnects included.
+    // Stop at the oldest still-open card instead: the cap governs
+    // scrollback, never an outstanding decision.
+    while (streamEl.children.length > 400) {
+      const n = streamEl.firstChild;
+      if (n.classList.contains("card")
+          && !n.classList.contains("closed")) break;
+      n.remove();
+    }
+  }
+
+  function addLine(cls, text, t) {
+    const div = document.createElement("div");
+    div.className = "line " + cls;
+    const ts = document.createElement("span");
+    ts.className = "t"; ts.textContent = t || "";
+    const msg = document.createElement("span");
+    msg.className = "msg"; msg.textContent = txt(text);
+    div.append(ts, msg);
+    streamAdd(div);
+  }
+
+  // Card-joins-stream rule (user ruling 2026-08-24): cards get no
+  // dedicated top zone — they share the same timeline as receipts,
+  // land in arrival order, and dim (not vanish) once answered
+  const cardEls = new Map();            // card id -> its element in the stream
+  function renderCard(c) {
+    if (!own(c.instance)) return;
+    const div = document.createElement("div");
+    div.className = "card " + txt(c.kind);
+    div.dataset.id = c.id;
+    const h = document.createElement("h3");
+    h.textContent = txt(c.title);
+    const body = document.createElement("pre");
+    body.textContent = txt(c.body);
+    div.append(h, body);
+    if (Array.isArray(c.options) && c.options.length) {
+      const opts = document.createElement("div");
+      opts.className = "opts";
+      for (const o of c.options) {
+        const b = document.createElement("button");
+        b.textContent = txt(o.label || o.action);
+        b.onclick = () => send({type: "card_answer", id: c.id,
+                                action: o.action, data: o.data});
+        opts.appendChild(b);
+      }
+      div.appendChild(opts);
+    }
+    if (c.kind === "ask" || c.kind === "stall") {
+      // Type-in line (same as observe, shipped 2026-08-23): an ask
+      // card takes free-form text as its answer; a stall card keys
+      // it into the terminal verbatim
+      const ln = document.createElement("div");
+      ln.className = "cline";
+      const inp = document.createElement("input");
+      inp.placeholder = (c.kind === "ask"
+        ? "Type a free-form answer — sent as your choice (Enter sends)…"
+        : "Type an answer — keyed into the terminal verbatim…");
+      const b = document.createElement("button");
+      b.textContent = "Send";
+      const fire = () => {
+        if (!inp.value.trim()) return;
+        send({type: "card_answer", id: c.id, action: "line",
+              data: inp.value.trim()});
+      };
+      b.onclick = fire;
+      inp.addEventListener("keydown",
+        e => { if (e.key === "Enter") fire(); });
+      ln.append(inp, b);
+      div.appendChild(ln);
+    }
+    const old = cardEls.get(c.id);
+    if (old) old.replaceWith(div);      // re-render swaps in place, no position jump
+    else streamAdd(div);
+    cardEls.set(c.id, div);
+  }
+
+  // ---- chains ledger (same logic as observe, filtered to this seat;
+  //      user ruling 2026-08-23: each panel shows only its own card
+  //      stream and task state) ---------------------------------------
+  const mine = r => EPLANE
+                 || r.intent === PNAME
+                 || r.spec === "protocol:" + PNAME;
+  const ownTask = r => (EPLANE
+    ? (own(r.executor) && r.executor !== "user")
+    : r.executor === SEAT);
+  const gateEls = new Map();            // gate task id -> stream element
+  function closeCardEl(el) {
+    el.classList.add("closed");
+    for (const x of el.querySelectorAll("button, input")) x.remove();
+  }
+  function renderGates(rows) {
+    const live = new Set(rows.map(r => r.task));
+    for (const [tid, el] of [...gateEls]) {
+      if (!live.has(tid)) {             // gate closed: dim but keep the trace, don't vanish
+        closeCardEl(el);
+        gateEls.delete(tid);
+      }
+    }
+    for (const r of rows) {
+      if (gateEls.has(r.task)) continue;
+      const div = document.createElement("div");
+      div.className = "card gate";
+      const h = document.createElement("h3");
+      h.textContent = (r.intent || r.spec || "?") + " ["
+                      + (r.gate || "gate") + "]";
+      const body = document.createElement("pre");
+      // r.detail = the submit summary (template.md head) — what is
+      // actually being approved; falls back to the old one-liner
+      body.textContent = r.detail
+        ? r.detail
+        : "chain c" + r.chain + " · " + (r.spec || "")
+          + " waiting at a human gate.";
+      const opts = document.createElement("div");
+      opts.className = "opts";
+      const b = document.createElement("button");
+      b.textContent = "Approve";
+      b.onclick = () => send({type: "approve", task: r.task});
+      opts.appendChild(b);
+      div.append(h, body, opts);
+      streamAdd(div);
+      gateEls.set(r.task, div);
+    }
+  }
+  function renderTaskline(rows) {
+    const el = document.getElementById("taskline");
+    const t = rows.find(ownTask);
+    if (!t) { el.textContent = ""; return; }
+    el.innerHTML = "";
+    el.append("t" + t.id + " · " + (t.spec || "") + " · ");
+    const st = document.createElement("span");
+    st.className = "st-" + txt(t.status);
+    st.textContent = txt(t.status);
+    el.appendChild(st);
+  }
+  // Task ledger drawer (observe's retry/cancel shortcuts folded in
+  // here): click taskline to expand — retry only on a terminal
+  // deliver task, cancel only on an unfinished one
+  let lastRows = [], tasksOpen = false;
+  const tasksEl = document.getElementById("tasks");
+  document.getElementById("taskline").onclick = () => {
+    tasksOpen = !tasksOpen;
+    tasksEl.classList.toggle("open", tasksOpen);
+    renderTasks();
+  };
+  function renderTasks() {
+    if (!tasksOpen) return;
+    tasksEl.textContent = "";
+    for (const r of lastRows.filter(ownTask).slice(0, 12)) {
+      const row = document.createElement("div");
+      row.className = "trow";
+      const b = document.createElement("b");
+      b.textContent = "t" + r.id;
+      const st = document.createElement("span");
+      st.className = "st-" + txt(r.status);
+      st.textContent = txt(r.status);
+      row.append(b, (r.spec || "") + (r.intent ? " · " + r.intent : ""),
+                 st);
+      const spec = String(r.spec || "");
+      // Protocol bracket tasks get NO retry and NO cancel (user
+      // ruling 2026-08-25): a bracket's only exits are the
+      // Shutdown key (close) and Interrupt (in-flight step)
+      const isBracket = spec.startsWith("protocol:");
+      if (!isBracket && spec.startsWith("deliver:")
+          && (r.status === "done" || r.status === "failed")) {
+        const rb = document.createElement("button");
+        rb.textContent = "retry";
+        rb.onclick = () => {
+          const why = prompt("Retry '" + (r.intent || "") + "' — "
+                             + "what should change? (optional)");
+          // prompt() returns null on dialog Cancel — that aborts
+          // the fire entirely (live-fire bug 2026-08-25: || ""
+          // swallowed the null and fired anyway); empty string =
+          // deliberate no-reason retry, still fires
+          if (why === null) return;
+          send({type: "retry", task: r.id, reason: why});
+        };
+        row.appendChild(rb);
+      }
+      if (!isBracket
+          && (r.status === "queued" || r.status === "running"
+              || r.status === "gated")) {
+        const cb = document.createElement("button");
+        cb.textContent = "cancel";
+        cb.onclick = () => send({type: "cancel", chain: r.chain_id});
+        row.appendChild(cb);
+      }
+      tasksEl.appendChild(row);
+    }
+    if (!tasksEl.children.length)
+      tasksEl.textContent = "no tasks on this plane yet";
+  }
+  function onChains(f) {
+    renderGates((f.ledger || []).filter(
+      r => r.status === "gated" && r.gate && mine(r)));
+    lastRows = f.rows || [];
+    renderTaskline(lastRows);
+    renderTasks();
+  }
+
+  function removeCard(id) {
+    const el = cardEls.get(id);
+    if (el) closeCardEl(el);            // dim once answered, keep the trace
+    cardEls.delete(id);
+  }
+
+  // Seat IME (unified interaction, user ruling 2026-08-23/24): the
+  // input box IS the IME — typing searches this panel's entries
+  // (engine panel = standalone intents, booklet panel = member
+  // steps); clicking pins it into the input line, further typing
+  // becomes the input value, Enter sends (an empty input is fine
+  // too); unpinned plain text = chat. Click again / Esc unpins.
+  // No hotkeys (user ruling: not needed).
+  let pinned = null, imeRows = [];
+  const pinEl = document.getElementById("pin");
+  // The input box has exactly one function, the IME (user ruling
+  // 2026-08-24, final): firing an intent + its input, not taking
+  // free text — a seat has no way to reply in the card stream
+  // (only ask cards do), so a fake chat surface would be misleading;
+  // real conversation goes through the CLI (Terminal drawer).
+  const PH0 = "Search " + (EPLANE ? "intents" : "steps")
+            + " — pin a match, Enter fires; to TALK, open the Terminal…";
+  function setPin(name) {
+    pinned = (pinned === name) ? null : name;
+    pinEl.textContent = pinned ? pinned + " ✕" : "";
+    pinEl.classList.toggle("has", !!pinned);
+    const box0 = document.getElementById("box");
+    if (pinned) box0.value = "";        // search term's job is done; hand the box to input
+    box0.placeholder = pinned
+      ? `input for ${pinned} (optional) — Enter fires`
+      : PH0;
+    paintIme();
+    box0.focus();
+  }
+  pinEl.onclick = () => setPin(pinned);
+  function paintIme() {
+    const box0 = document.getElementById("box");
+    const q = pinned ? "" : box0.value.trim().toLowerCase();
+    imeEl.textContent = "";
+    for (const r of imeRows) {
+      if (q && !(r.name.toLowerCase().includes(q)
+                 || String(r.title || "").toLowerCase().includes(q)))
+        continue;
+      const b = document.createElement("button");
+      b.textContent = txt(r.name);
+      if (r.title) b.title = txt(r.title);
+      b.classList.toggle("on", r.name === pinned);
+      b.onclick = () => setPin(r.name);
+      imeEl.appendChild(b);
+    }
+    imeEl.classList.toggle("has", imeEl.children.length > 0);
+  }
+  function renderIme(rows) {
+    imeRows = rows;
+    paintIme();
+  }
+
+  function ensureTerm() {
+    if (term) return;
+    term = new Terminal({fontSize: 12, convertEol: false,
+                         theme: {background: "#0c0e12"}});
+    term.open(document.getElementById("term"));
+    term.onData(d => send(Object.assign({type: "cli_in", data: d},
+                                        seatArgs())));
+  }
+
+  // responsive terminal: measure the drawer, resize xterm, and tell
+  // the engine to resize the ConPTY the same way — the TUI reflows
+  // instead of the page faking it with scrollbars
+  function cellDims() {
+    try {
+      const d = term._core._renderService.dimensions.css.cell;
+      if (d && d.width > 0 && d.height > 0) return d;
+    } catch (_) {}
+    return {width: 7.5, height: 16};
+  }
+  let lastSize = "";
+  function fitTerm() {
+    if (!term || !termOpen) return;
+    const el = document.getElementById("term");
+    if (!el.clientWidth || !el.clientHeight) return;
+    const c = cellDims();
+    const cols = Math.max(40,
+      Math.floor((el.clientWidth - 12) / c.width));
+    const rows = Math.max(8,
+      Math.floor((el.clientHeight - 8) / c.height));
+    if (cols !== term.cols || rows !== term.rows)
+      term.resize(cols, rows);
+    const key = cols + "x" + rows;
+    if (key !== lastSize) {
+      lastSize = key;
+      send(Object.assign({type: "cli_size", cols, rows}, seatArgs()));
+    }
+  }
+  let fitTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(fitTimer);
+    fitTimer = setTimeout(fitTerm, 200);
+  });
+
+  document.getElementById("termbtn").onclick = () => {
+    termOpen = !termOpen;
+    document.getElementById("term-wrap").classList.toggle("open",
+                                                          termOpen);
+    if (termOpen) {
+      ensureTerm();
+      if (!cliSubbed) { cliSubbed = true;
+        send(Object.assign({type: "cli_sub"}, seatArgs())); }
+      requestAnimationFrame(fitTerm);
+      term.focus();
+    }
+  };
+
+  function send(frame) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(frame));
+  }
+
+  const box = document.getElementById("box");
+  box.placeholder = PH0;
+  function submit() {
+    const text = box.value.trim();
+    if (pinned) {
+      // a pinned entry = fire that intent/member, body text as its input (may be empty)
+      send({type: "intent", name: pinned, input: text});
+      addLine("user", "▶ " + pinned + (text ? " " + text : ""), "");
+      box.value = "";
+      setPin(pinned);                   // toggle clears the pin
+      return;
+    }
+    // Nothing sends unpinned (the IME sole-function rule): when the
+    // search term narrows to exactly one entry, Enter pins it as a
+    // convenience; otherwise, prompt the user to talk in the Terminal
+    if (imeEl.children.length === 1) {
+      setPin(imeEl.children[0].textContent);
+      return;
+    }
+    if (text) {
+      box.placeholder = "Not a trigger — pin an intent above, or talk "
+                      + "in the Terminal";
+      box.value = "";
+      paintIme();
+      setTimeout(() => { if (!pinned) box.placeholder = PH0; }, 2500);
+    }
+  }
+  document.getElementById("send").onclick = submit;
+  box.addEventListener("input", () => { if (!pinned) paintIme(); });
+  box.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+    if (e.key === "Escape" && pinned) setPin(pinned);
+  });
+
+  function onFrame(f) {
+    switch (f.type) {
+      case "card": renderCard(f); break;
+      case "cards": {
+        // hello replays a snapshot: render any cards still open;
+        // ones missed by card_close during the disconnect dim in
+        // place if absent from the snapshot
+        const open = new Set((f.rows || []).map(c => c.id));
+        for (const [cid, el] of [...cardEls]) {
+          if (!open.has(cid)) { closeCardEl(el); cardEls.delete(cid); }
+        }
+        for (const c of (f.rows || [])) renderCard(c);
+        break;
+      }
+      case "card_close": removeCard(f.id); break;
+      case "chat":
+        // Receipts-only rule (user ruling 2026-08-24): the panel
+        // renders only the engine's own lines (receipts) — text the
+        // user/machine types into the CLI belongs to the terminal
+        // transcript, the panel does not echo it; a seat has no way
+        // to reply here, so rendering it would be a fake chat surface
+        if (!own(f.instance) || f.name === "user") break;
+        addLine("engine", f.text, f.t);
+        break;
+      case "feed":
+        if (!own(f.instance)) break;
+        addLine("feed", `[${txt(f.kind)}] ${txt(f.text)}`, f.t);
+        break;
+      case "cli":
+        if (term) term.write(f.data);
+        break;
+      case "intents":
+        // engine panel consumes the global word-list frame (no
+        // instance); a booklet panel consumes its own seat's frame
+        if (EPLANE ? !f.instance : f.instance === SEAT)
+          renderIme(f.rows || []);
+        break;
+      case "chains": onChains(f); break;
+      case "flow_close":
+        if (EPLANE || f.instance !== SEAT) break;
+        closing = true;
+        try { window.close(); } catch (_) {}
+        // window.close() can be refused — degrade to a farewell overlay
+        setTimeout(() => {
+          offline.textContent =
+            "instance stopped — you can close this window";
+          offline.classList.add("show");
+        }, 250);
+        break;
+    }
+  }
+
+  async function connect() {
+    try {
+      const r = await fetch("/api/discover");
+      const {ws: port} = await r.json();
+      ws = new WebSocket(`ws://127.0.0.1:${port}`);
+      ws.onopen = () => {
+        dot.classList.add("live");
+        offline.classList.remove("show");
+        send(Object.assign({type: "hello"}, seatArgs()));
+        send({type: "chains"});
+        if (cliSubbed) send(Object.assign({type: "cli_sub"}, seatArgs()));
+        lastSize = "";                 // the engine may have restarted: re-report size
+        setTimeout(fitTerm, 300);
+      };
+      ws.onmessage = e => {
+        try { onFrame(JSON.parse(e.data)); } catch (_) {}
+      };
+      ws.onclose = () => {
+        dot.classList.remove("live");
+        if (closing) return;
+        offline.classList.add("show");
+        setTimeout(connect, 2000);
+      };
+    } catch (_) {
+      if (closing) return;
+      offline.classList.add("show");
+      setTimeout(connect, 2000);
+    }
+  }
+  connect();
+  // resync (same as observe): ledger frames can be missed, so
+  // re-fetch periodically + whenever the tab returns to foreground
+  const resync = () => {
+    if (ws && ws.readyState === 1) send({type: "chains"});
+  };
+  setInterval(resync, 15000);
+  document.addEventListener("visibilitychange",
+    () => { if (!document.hidden) resync(); });
+})();
+</script>
+</body>
+</html>

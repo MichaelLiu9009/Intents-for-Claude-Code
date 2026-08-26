@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IntentOS</title>
+<style>
+  /* hub shell (user ruling 2026-08-23): all instance UIs collapse into
+     one window, one tab per seat; a tab's content is a /flow?i=<seat>
+     iframe (flow page unmodified — each tab connects its own WS and
+     manages its own terminal). */
+  :root {
+    --bg: #101318; --panel: #171b22; --edge: #232a35;
+    --ink: #d7dde6; --dim: #8a94a3; --accent: #7a8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 13px/1.5 "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  #tabs {
+    flex: none; display: flex; align-items: flex-end; gap: 3px;
+    background: var(--panel); border-bottom: 1px solid var(--edge);
+    padding: 6px 8px 0;
+  }
+  #tabs .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 16px; border: 1px solid var(--edge);
+    border-bottom: none; border-radius: 8px 8px 0 0; cursor: pointer;
+    color: var(--dim); background: #131720; font-size: 12px;
+    user-select: none; white-space: nowrap;
+  }
+  #tabs .tab.active {
+    color: var(--ink); background: var(--bg);
+    border-color: var(--accent);
+  }
+  #tabs .brand {
+    margin-left: auto; color: var(--dim); font-size: 11px;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 0 8px 6px;
+  }
+  #frames { flex: 1 1 0; position: relative; }
+  #frames iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    border: none; display: none; background: var(--bg);
+  }
+  #frames iframe.active { display: block; }
+  #empty {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; color: var(--dim); font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<div id="tabs"><span class="brand">IntentOS</span></div>
+<div id="frames"><div id="empty">no instance open</div></div>
+<script>
+(() => {
+  const HUB = "·hub";
+  const ENGINE = "·engine";             // permanent first tab: observe page folded in
+  const tabsEl = document.getElementById("tabs");
+  const framesEl = document.getElementById("frames");
+  const emptyEl = document.getElementById("empty");
+  const tabs = new Map();               // seat -> {btn, frame}
+  let ws = null, active = null;
+
+  const pnameOf = seat => seat === ENGINE ? "engine"
+                                          : seat.replace(/^x·/, "");
+
+  function activate(seat) {
+    active = seat;
+    for (const [s, t] of tabs) {
+      t.btn.classList.toggle("active", s === seat);
+      t.frame.classList.toggle("active", s === seat);
+    }
+    document.title = (seat ? pnameOf(seat) + " · " : "")
+                     + "IntentOS";
+  }
+
+  function addTab(seat, focus) {
+    if (tabs.has(seat)) { if (focus) activate(seat); return; }
+    const btn = document.createElement("div");
+    btn.className = "tab";
+    btn.textContent = pnameOf(seat);
+    btn.onclick = () => activate(seat);
+    tabsEl.insertBefore(btn, tabsEl.querySelector(".brand"));
+    const frame = document.createElement("iframe");
+    frame.src = (seat === ENGINE
+                 ? "/observe"
+                 : "/flow?i=" + encodeURIComponent(seat));
+    framesEl.appendChild(frame);
+    tabs.set(seat, {btn, frame});
+    emptyEl.style.display = "none";
+    if (focus || !active) activate(seat);
+  }
+
+  function removeTab(seat) {
+    if (seat === ENGINE) return;        // engine tab is permanent, never removed
+    const t = tabs.get(seat);
+    if (!t) return;
+    t.btn.remove();
+    t.frame.remove();
+    tabs.delete(seat);
+    if (active !== seat) return;
+    // The engine tab is permanent (addTab(ENGINE) at boot, removeTab
+    // refuses it above), so tabs is never empty here — the old
+    // "last tab gone, retire the window" branch was unreachable and
+    // was removed (audit 2026-08-25). Fall back to the newest tab.
+    const rest = [...tabs.keys()];
+    activate(rest[rest.length - 1]);
+  }
+
+  function send(f) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(f));
+  }
+
+  async function connect() {
+    try {
+      const r = await fetch("/api/discover");
+      const {ws: port} = await r.json();
+      ws = new WebSocket(`ws://127.0.0.1:${port}`);
+      ws.onopen = () => send({type: "hello", instance: HUB});
+      ws.onmessage = e => {
+        let f;
+        try { f = JSON.parse(e.data); } catch (_) { return; }
+        if (f.type === "flow_open" && f.instance) {
+          addTab(f.instance, true);
+        } else if (f.type === "flow_close" && f.instance) {
+          removeTab(f.instance);
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 2000);
+    } catch (_) {
+      setTimeout(connect, 2000);
+    }
+  }
+
+  addTab(ENGINE, true);                 // permanent first tab (observe folded in)
+  const init = new URLSearchParams(location.search).get("i");
+  if (init) addTab(init, true);
+  connect();
+})();
+</script>
+</body>
+</html>
