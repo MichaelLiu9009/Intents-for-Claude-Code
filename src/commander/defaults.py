@@ -505,6 +505,14 @@ may not be at this window**, saying it only in conversation is
 saying nothing; what the user types in conversation is answered in
 conversation as usual. Mechanism details (surgery / retry / cancel /
 timeouts / firing failed) are in the skill **task-delivery**.
+**A cancelled question form yields zero answers (user ruling
+2026-08-25)**: when the user cancels or declines a question form,
+every part of it is void — adopt nothing from it (not the
+highlighted option, not a half-entered value, not an answer that
+looked selected before the cancel), and re-collect whatever you
+still need in plain conversation. Live-fire precedent: a cancelled
+form's device pick was silently carried into the build and the user
+had to correct it.
 
 ## Your assets: intent and protocol (two species, peer rank)
 

@@ -1812,17 +1812,11 @@ class Engine:
                             brief=w["brief"])
             if not ok:
                 lost.append(w["brief"])
-        if lost:
-            more = (f" ({len(lost)} in this batch)" if len(lost) > 1
-                    else "")
-            self._card_open(
-                "info", "Injection may not have landed" + more,
-                f"No new transcript bytes {defaults.INJECT_ACK_S:.0f}s "
-                f"after handing the host this line — likely eaten by an "
-                f"interstitial dialog (wizard / update prompt: check "
-                f"the terminal, Esc it, resend).\n"
-                f"Injected: {lost[0]}\n\n"
-                f"Screen tail:\n" + (self._pty_tail() or "(none)"))
+        # No card for a lost line (user ruling 2026-08-25): the
+        # terminal drawer shows the miss at a glance, and the
+        # journal's inject/lost row keeps the evidence — a card on
+        # top was noise (it also fired on queued-behind-a-form
+        # lines that were not actually lost).
 
     def _gate_wait(self, kind: str, title: str, body: str,
                    options: list, timeout: float,
@@ -2001,7 +1995,7 @@ class Engine:
                 lab = str(o.get("label") or "")
                 desc = str(o.get("description") or "")
                 lines.append(f"  {i + 1}. {lab}"
-                             + (f" — {desc[:80]}" if desc else ""))
+                             + (f" — {desc[:240]}" if desc else ""))
             if q.get("multiSelect"):
                 lines.append("  (multi-select — answer in the "
                              "terminal)")

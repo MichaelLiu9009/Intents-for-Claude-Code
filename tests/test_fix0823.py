@@ -195,8 +195,13 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     with eng._card_lock:
         alarm = any("not have landed" in c.get("title", "")
                     for c in eng._cards.values())
-    check("3c not long-thinking and genuinely dropped -> alarms "
-          "as usual", alarm)
+    jtxt = eng.journal._path.read_text(encoding="utf-8")
+    check("3c not long-thinking and genuinely dropped -> journal "
+          "inject/lost row, NO card (user ruling 2026-08-25: the "
+          "terminal shows the miss, the card was noise)",
+          not alarm
+          and '"kind": "inject", "name": "lost"' in jtxt
+          and not eng._inject_watch)
 
     try:
         eng.stop()

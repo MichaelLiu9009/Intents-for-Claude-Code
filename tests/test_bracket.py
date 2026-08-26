@@ -249,12 +249,16 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     (ack / "s1.jsonl").write_text(
         '{"type":"assistant","message":{"content":[]}}\n',
         encoding="utf-8")
-    lost = wait_for(lambda: any(
-        c2["kind"] == "info" and "not have landed" in c2["title"]
-        for c2 in list(eng._cards.values())), timeout=10)
+    lost = wait_for(lambda: not eng._inject_watch, timeout=10)
+    jtxt = eng.journal._path.read_text(encoding="utf-8")
     check("4a transcript is moving but no user row with this line "
-          "→ not-delivered card (51: mtime would miss it)",
-          bool(lost))
+          "→ journal inject/lost row and NO card (user ruling "
+          "2026-08-25: the terminal shows the miss at a glance, "
+          "the card was noise; 51 still holds for the criterion)",
+          bool(lost)
+          and '"kind": "inject", "name": "lost"' in jtxt
+          and not any("not have landed" in str(c2.get("title"))
+                      for c2 in list(eng._cards.values())))
 
     def _lost_ids():
         with eng._card_lock:
