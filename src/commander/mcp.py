@@ -160,19 +160,24 @@ TOOLS = [
                                                  "resolves by name)"}},
                      "required": ["name"]}},
     {"name": "intent_retire",
-     "description": "Propose retiring one standalone intent (call only "
-                    "when the user asks — termination is a human "
-                    "ruling). Opens a retirement gate card; user "
-                    "approval takes it out of the IME and the deck "
-                    "keyset. Soft: history and ledger stay, "
+     "description": "Propose retiring one standalone intent OR one "
+                    "whole booklet by name (call only when the user "
+                    "asks — termination is a human ruling). Opens a "
+                    "retirement gate card; user approval takes it out "
+                    "of the IME and the deck keyset — a booklet "
+                    "retires with all its member keys (one compile "
+                    "unit, one fate; an open bracket must Shutdown "
+                    "first). Soft: history and ledger stay, "
                     "workspace_submit on the folder revives it. "
-                    "Booklet members are not retirable here — edit the "
-                    "booklet's members/ and resubmit the whole booklet.",
+                    "Booklet members are not retirable one by one — "
+                    "edit the booklet's members/ and resubmit the "
+                    "whole booklet.",
      "inputSchema": {"type": "object",
                      "properties": {
                          "name": {"type": "string",
                                   "description": "the standalone "
-                                                 "intent to retire"},
+                                                 "intent or booklet "
+                                                 "to retire"},
                          "why": {"type": "string",
                                  "description": "one line for the "
                                                 "approval card (e.g. "

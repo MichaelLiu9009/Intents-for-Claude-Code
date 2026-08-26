@@ -2930,7 +2930,38 @@ class Engine:
             # retirement — leaves the roster but not the history;
             # journal/tasks all retained; revival = re-submit via
             # workspace_submit
-            if it is None or it["status"] != "provisioned":
+            if it is None:
+                # Booklet branch (live-fire precedent 2026-08-26: a
+                # renamed booklet left its old self stranded — there
+                # was no retirement path for protocols at all). Same
+                # soft law: proto row + declared members flip to
+                # retired together (one compile unit, one fate); the
+                # open-bracket case was refused at proposal time.
+                p = self.store.proto_get(name)
+                if p is None or p["status"] != "provisioned":
+                    return
+                self.store.proto_set_status(name, "retired")
+                for m in (p.get("members") or []):
+                    mi = self.store.intent(m)
+                    if (mi is not None and mi.get("proto") == name
+                            and mi["status"] == "provisioned"):
+                        self.store.intent_revise(m, status="retired")
+                        self._hot.pop(m, None)
+                self.journal.row("protocol", "retired", intent=name,
+                                by="gate-approved",
+                                members=len(p.get("members") or []))
+                self._solo_refresh()
+                self._compile_intents_keyset()
+                self._compile_deck_plugin()    # sidebar group drops with the roster
+                self._say_engine(f"Booklet '{name}' retired with its "
+                                 f"members — gone from the IME and the "
+                                 f"deck (one Stream Deck app restart "
+                                 f"clears its sidebar group). History "
+                                 f"and ledger stay; to revive, "
+                                 f"workspace_submit the folder again.")
+                self.channel.broadcast(self._intents_frame())
+                return
+            if it["status"] != "provisioned":
                 return
             self.store.intent_revise(name, status="retired")
             self._hot.pop(name, None)
@@ -4525,7 +4556,57 @@ class Engine:
             return {"error": "intent_retire: name is empty"}
         it = self.store.intent(name)
         if it is None:
-            return {"error": f"intent_retire: '{name}' does not exist"}
+            p = self.store.proto_get(name)
+            if p is None:
+                return {"error": f"intent_retire: '{name}' does not "
+                                 f"exist"}
+            # Booklet retirement (2026-08-26, closes the gap the
+            # rename live-fire exposed): same proposal law — agent
+            # proposes, the human gate decides; approval retires the
+            # whole compile unit (booklet + declared members).
+            if p["status"] != "provisioned":
+                return {"error": f"intent_retire: booklet '{name}' is "
+                                 f"not on the shelf "
+                                 f"(status={p['status']}) — nothing "
+                                 f"to retire"}
+            if self._bracket_of(name) is not None:
+                return {"error": f"intent_retire: booklet '{name}' has "
+                                 f"an open bracket — Shutdown it "
+                                 f"first, then retire"}
+            prev = self.store.latest_for(name, FLOW_RETIRE)
+            if prev is not None and prev["status"] == "gated":
+                return {"ok": True, "task": prev["id"],
+                        "note": "the retirement gate is already up "
+                                "waiting for the user — no duplicate "
+                                "card"}
+            t = self.store.chain_start(FLOW_RETIRE, issuer=caller,
+                                       intent=name, payload=why or None)
+            roster = "、".join(p.get("members") or []) or "(none)"
+            tpl = self._task_dir(t["id"]) / "template.md"
+            tpl.write_text(
+                f"# Retirement: booklet {name}\n\n"
+                f"- scenario: {p.get('scenario') or '(none)'}\n"
+                f"- members (retire together): {roster}\n"
+                f"- proposed reason: {why or '(unset)'}\n\n"
+                f"Approval = the booklet and its member keys leave "
+                f"the IME and the deck; the full history ledger is "
+                f"kept, resubmitting via workspace_submit revives "
+                f"it.\n", encoding="utf-8")
+            self.journal.row("protocol", "retire-proposed",
+                            intent=name, task=t["id"], caller=caller,
+                            why=why or None)
+            self._say_engine(f"Booklet '{name}' pending retirement "
+                             f"(task {t['id']}): approval takes it and "
+                             f"its member keys out of the IME and the "
+                             f"deck — history stays, resubmitting the "
+                             f"workspace revives it."
+                             + (f" Reason: {why}" if why else ""))
+            self._task_bcast()
+            return {"ok": True, "task": t["id"], "status": t["status"],
+                    "note": "retirement gate is open — waiting for "
+                            "the user; approval retires the booklet "
+                            "with its members and recompiles the "
+                            "keysets"}
         if it.get("proto"):
             return {"error": f"intent_retire: '{name}' is a member of "
                              f"booklet '{it['proto']}' — members are "
@@ -5398,10 +5479,12 @@ class Engine:
         self.store.spec_put(
             FLOW_RETIRE, head=self.module,
             priority=defaults.PRIORITY_SELF,
-            consequence="retire a standalone intent: human approval "
-                        "takes effect — leaves the IME and deck "
-                        "rosters; the full history ledger is kept, "
-                        "resubmitting via workspace_submit revives it",
+            consequence="retire a standalone intent or a whole "
+                        "booklet (with its member keys): human "
+                        "approval takes effect — leaves the IME and "
+                        "deck rosters; the full history ledger is "
+                        "kept, resubmitting via workspace_submit "
+                        "revives it",
             steps=[
                 {"assignee": "user", "kind": "gate",
                  "gate": "approve retirement",

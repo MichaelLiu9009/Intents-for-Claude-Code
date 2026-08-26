@@ -338,6 +338,27 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                       for r2 in eng.store._db.execute(
                           "SELECT spec FROM tasks")))
 
+    # ---- 7. booklet retirement (user ruling 2026-08-26: the rename
+    # live-fire left a stranded booklet — there was no protocol
+    # retirement path at all. intent_retire now takes a booklet name;
+    # approval retires the compile unit whole) ----
+    r = eng._intent_retire({"name": "练琴", "why": "旧册退役(测试)"},
+                           "sidecar")
+    check("7a booklet retirement proposal opens a gate",
+          bool(r.get("ok")) and r.get("task") is not None)
+    eng._on_approve(r["task"])
+    ok7 = wait_for(lambda: (eng.store.proto_get("练琴") or {})
+                   .get("status") == "retired", timeout=10)
+    check("7b approval retires the booklet (soft: row stays, "
+          "status flips)", bool(ok7))
+    check("7c declared members retire with the book (one compile "
+          "unit, one fate)",
+          all((eng.store.intent(m) or {}).get("status") == "retired"
+              for m in ("铺谱", "陪聊")))
+    r2 = eng._intent_retire({"name": "练琴"}, "sidecar")
+    check("7d re-propose on a retired booklet is refused",
+          "not on the shelf" in str(r2.get("error") or ""))
+
     c.close()
 
 print()
