@@ -70,8 +70,15 @@ receipt — duration, calls, tokens.
 
 <!-- INTENT TRIGGER VIDEO: drag readme-intent-trigger.mp4 here -->
 
-<!-- CONSOLIDATION VIDEO slot: readme-consolidation.mp4 — narration
-     to be written once the clip's story is confirmed -->
+### Revision is the same conversation
+
+Nothing freezes at minting. The first cut of this recording booklet
+couldn't capture more than one device in a session — so you just say
+so. The sidecar revises the declarations, re-registers the booklet
+whole, and one approval card later the improved version is live.
+Edit-and-re-register is the normal loop, not an exception.
+
+<!-- CONSOLIDATION VIDEO: drag readme-consolidation.mp4 here -->
 
 ## Install
 
