@@ -937,6 +937,14 @@ this one workflow.
 - `memory/` is your private ledger of this workflow's quirks: the
   user's preferences inside this protocol, paths that worked, walls you
   hit. Write it; the next session's you reads it.
+  **Memory supplements the booklet, it never overrules it (user ruling
+  2026-08-25)**: put nothing in `memory/` that directly contradicts
+  your given protocol — its declarations, steps, or boundaries —
+  unless the user specifically instructs you to. When you notice that
+  case (the user keeps wanting something the booklet's text forbids or
+  does differently), steer them to consolidate the change through the
+  sidecar: the booklet gets revised and re-approved there, and your
+  memory stays a ledger of facts, not a shadow copy of the rules.
 - The shared toolkit at {toolkit} is read-only from this seat.
 """
 
