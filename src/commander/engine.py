@@ -4685,13 +4685,15 @@ class Engine:
         # here, after the dispatch, so protocols keep their own
         # message, and above every store write so a refusal leaves
         # no orphan row. \w is Unicode-aware — CJK names still pass.
-        if not re.fullmatch(r"\w{1,%d}" % defaults.INTENT_SCENARIO_MAX,
-                            name):
-            return {"error": f"intent_submit: name must be one word "
-                             f"(≤{defaults.INTENT_SCENARIO_MAX} chars, "
-                             f"no spaces, punctuation or path "
-                             f"separators) — it doubles as the "
-                             f"workspace directory name"}
+        if not re.fullmatch(
+                r"\w(?:[\w \-]{0,%d}\w)?"
+                % (defaults.INTENT_NAME_MAX - 2), name):
+            return {"error": f"intent_submit: name must be a word or "
+                             f"a short phrase "
+                             f"(≤{defaults.INTENT_NAME_MAX} chars; "
+                             f"internal spaces/hyphens ok, no dots "
+                             f"or path separators) — it doubles as "
+                             f"the workspace directory name"}
         title = str(f.get("title") or "").strip()
         scenario = str(f.get("scenario") or "").strip()
         # I-E-R (2026-08-16): the declaration-face key is
@@ -4844,11 +4846,14 @@ class Engine:
         register. The old protocol_submit / protocol_register are
         both folded in: the member roster goes into the members
         field, registering stamps the pointer."""
-        if not re.fullmatch(r"\w{1,%d}" % defaults.INTENT_SCENARIO_MAX,
-                            name or " "):
+        if not re.fullmatch(
+                r"\w(?:[\w \-]{0,%d}\w)?"
+                % (defaults.INTENT_NAME_MAX - 2), name or " "):
             return {"error": f"intent_submit(protocol): name must be "
-                             f"one word "
-                             f"(≤{defaults.INTENT_SCENARIO_MAX} chars)"}
+                             f"a word or a short phrase "
+                             f"(≤{defaults.INTENT_NAME_MAX} chars; "
+                             f"internal spaces/hyphens ok, no dots "
+                             f"or path separators)"}
         if name == defaults.XSOLO_NAME:
             return {"error": f"'{defaults.XSOLO_NAME}' is the "
                              f"executor seat's reserved name"}

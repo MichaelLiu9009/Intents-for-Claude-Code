@@ -62,9 +62,10 @@ SUBDIRS = (TOOLS_DIR, INPUTS_DIR, RECORDS_DIR)
 # bug class to catch.
 SCHEMA: dict = {
     "name": {
-        "required": True, "kind": "word",
-        "max": defaults.INTENT_SCENARIO_MAX,
-        "desc": "one word, no spaces or punctuation. Doubles as the "
+        "required": True, "kind": "phrase",
+        "max": defaults.INTENT_NAME_MAX,
+        "desc": "a word or a short phrase (internal spaces/hyphens "
+                "ok; no dots or path separators). Doubles as the "
                 "directory name and the trigger name."},
     "title": {
         "required": False, "kind": "text", "max": 60,
@@ -499,6 +500,11 @@ def validate(decl: dict, kind: str = "intent") -> list[str]:
             elif kd == "word" and not _is_word(v):
                 probs.append(f"`{k}` must be one word (no spaces or "
                              f"punctuation)")
+            elif kd == "phrase" and not _is_phrase(v):
+                probs.append(f"`{k}` must be a word or a short "
+                             f"phrase (internal spaces/hyphens ok; "
+                             f"no dots or path separators, no "
+                             f"leading/trailing space)")
             elif k == "steps":
                 probs += parse_steps(v)[1]
             elif k == "acceptance":
@@ -543,6 +549,15 @@ def validate(decl: dict, kind: str = "intent") -> list[str]:
 
 def _is_word(s: str) -> bool:
     return bool(s) and all(ch.isalnum() or ch == "_" for ch in s)
+
+
+def _is_phrase(s: str) -> bool:
+    """Name rule (user ruling 2026-08-26): a word or a short phrase —
+    \\w runs joined by single spaces or hyphens. Dots and path
+    separators stay impossible (the name doubles as a directory
+    name; the path-escape audit of 2026-08-25 still holds)."""
+    return bool(s) and _is_word(s[0]) and _is_word(s[-1]) and all(
+        ch.isalnum() or ch in "_ -" for ch in s)
 
 
 # ---- Resolve files by declaration: existence + hash (proof of effect) ----

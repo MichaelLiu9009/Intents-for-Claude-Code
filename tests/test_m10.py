@@ -276,6 +276,28 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:   # Windows
           "cap governs hotness, not store size",
           r.get("ok") and eng.store.intent("挤爆") is not None)
 
+    # ---- name = a word OR a short phrase (user ruling 2026-08-26:
+    # English names are phrases -- cap the length, not the word
+    # count; dots/path separators stay impossible) ----
+    r = post({"verb": "intent_submit", "name": "screen recording",
+              "steps": "做"})
+    check("9h2 phrase name passes the gate and founds a workspace",
+          r.get("ok")
+          and eng.store.intent("screen recording") is not None)
+    r = post({"verb": "intent_submit", "name": "bad..name",
+              "steps": "做"})
+    r2 = post({"verb": "intent_submit", "name": "sub/dir",
+               "steps": "做"})
+    r3 = post({"verb": "intent_submit",
+               "name": "way too long a name for any key face at all",
+               "steps": "做"})
+    check("9h3 dots, path separators and over-length still refused "
+          "(path-escape audit holds, cap = INTENT_NAME_MAX; edge "
+          "whitespace is stripped before the gate, not refused)",
+          "phrase" in r.get("error", "")
+          and "phrase" in r2.get("error", "")
+          and "phrase" in r3.get("error", ""))
+
     # ---- scoring law: exposure scores zero, get is partial credit,
     # trigger is full credit ----------------------
     s0 = eng.store.intent("旧一")["use_score"]

@@ -127,8 +127,11 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     # path component, written by the engine itself -- so neither the
     # CLI permission system nor the deny floor is in that path --
     siblings = {p.name for p in _ws.home(eng).parent.iterdir()}
+    # "a b" left the hostile list (user ruling 2026-08-26: a name is
+    # a word or a short phrase — internal spaces are legal now, the
+    # positive pin lives in test_m10 9h2); path shapes stay hostile.
     hostile = ["../evil", "..\\evil", "C:/evil", "//srv/share/evil",
-               "a b", "x/y", ""]
+               "a.b", "x/y", ""]
     refused = all(
         "name" in post({"verb": "intent_submit", "name": h,
                         "title": "x", "scenario": "x",

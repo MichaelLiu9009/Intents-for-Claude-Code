@@ -250,6 +250,7 @@ SEARCH_MIN_SIM = 0.10        # recall floor similarity (mechanical v1
 # intent's substance), steps are the execution surface (doable with
 # no context), acceptance is a one-line lesson. Folded in at M19.
 INTENT_SCENARIO_MAX = 20         # scenario word: one word, <=20 chars, no whitespace/punctuation (\w)
+INTENT_NAME_MAX = 30             # asset name: a word OR a short phrase (user ruling 2026-08-26: English names are phrases — cap the length, not the word count); internal spaces/hyphens ok, dots/path separators never (the name doubles as the workspace directory name)
 INTENT_STEPS_MAX = 1200  # tight-budget craft law (user ruling
                          # 2026-08-16, originally 600 for Chinese
                          # text; ×2 with the English word list

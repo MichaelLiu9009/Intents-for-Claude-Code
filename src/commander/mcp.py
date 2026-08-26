@@ -79,9 +79,12 @@ TOOLS = [
      "inputSchema": {"type": "object",
                      "properties": {
                          "name": {"type": "string",
-                                  "description": "one word, ≤20 chars; "
-                                                 "both directory name "
-                                                 "and trigger name"},
+                                  "description": "a word or short "
+                                                 "phrase, ≤30 chars "
+                                                 "(spaces/hyphens ok, "
+                                                 "no dots); both "
+                                                 "directory name and "
+                                                 "trigger name"},
                          "kind": {"type": "string",
                                   "enum": ["intent", "protocol"],
                                   "description": "default intent; "
