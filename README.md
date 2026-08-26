@@ -4,15 +4,7 @@
 Talk once — it compiles how you use this machine into push-button
 assets. From then on, it's a button.
 
-<!-- 
 https://github.com/user-attachments/assets/7a970b55-3b5a-45a7-b1c5-10ac8f6a728e
-
-
-https://github.com/user-attachments/assets/478ed846-4200-461d-af6a-6f2bb6efc04d
-
- VIDEO: in the GitHub web editor, drag
-     readme-embed-usage.mp4 here (it uploads as a playable inline
-     embed; readme-embed-deck.mp4 is the alternate). -->
 
 **v0.1.0 (M26 baseline)** — a personal customization layer on top of
 the [Claude Code](https://claude.com/claude-code) harness. You
@@ -33,6 +25,10 @@ internal name — you will see it on panels and key sets.)
      4 register the package — the keyset auto-compiles into the Elgato app
      5 start using your protocol
      6 lifecycle control from the Stream Deck -->
+
+Lifecycle control from the Stream Deck — open, step, wrap up:
+
+https://github.com/user-attachments/assets/478ed846-4200-461d-af6a-6f2bb6efc04d
 
 ![The hub's engine tab: an intent pinned on the input line, Enter fires](docs/img/hub.png)
 
