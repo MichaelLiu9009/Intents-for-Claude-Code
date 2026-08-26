@@ -1,37 +1,34 @@
 # Intents for Claude Code
 
-**v0.1.0 (M26 baseline)** — a personal customization layer on top of the
-[Claude Code](https://claude.com/claude-code) harness: it compiles *how
-this person uses this machine and this agent* into triggerable, reusable,
-composable assets. Positioning in one line: **an input method for
-agency.** (Project name: Intents for Claude Code; the engine keeps
-**IntentOS** as its internal name — you will see it on panels and key
-sets.)
+**An input method for agency.**
+Talk once — it compiles how you use this machine into push-button
+assets. From then on, it's a button.
 
-Two species, three seats, one resident engine:
+<!-- HERO VIDEO: in the GitHub web editor, drag
+     readme-embed-usage.mp4 here (it uploads as a playable inline
+     embed; readme-embed-deck.mp4 is the alternate). -->
 
-- **intent** — a stateless one-way order (an E pseudo-code function
-  body inside the three-section I-E-R declaration); triggering it
-  delivers to the **x·solo executor seat** (headless, one process per
-  order, parallel). Optional `procedures` preludes (the engine's
-  built-in physical layer, e.g. `screenshot`, mouse-anchored)
-  collect materials before delivery. The step grammar is a compact
-  closed verb set owned by the engine — see `docs/INTENT_SPEC.md`.
-- **protocol** — a stateful multi-round bracket ("booklet"; the test:
-  does the next step need to remember the last one). Each booklet gets a
-  **resident instance seat** (x·\<booklet\>): the power key opens the
-  bracket, member keys deliver steps, pressing power again runs the
-  closing ceremony; the seat's home and memory persist across sessions,
-  and booklets run in parallel.
-- **sidecar** — the resident interaction/maintenance seat: creation,
-  revision, surgery, rework, sim QA; the compiler of every asset.
+**v0.1.0 (M26 baseline)** — a personal customization layer on top of
+the [Claude Code](https://claude.com/claude-code) harness. You
+describe a habit once, in conversation; the engine compiles it into a
+declared, schema-checked asset with acceptance criteria; a real agent
+seat runs it every time you press its key — on a Stream Deck, or in
+the browser hub. You never type prompts to make things run. (Project
+name: Intents for Claude Code; the engine keeps **IntentOS** as its
+internal name — you will see it on panels and key sets.)
 
-Physical entry points: a **Stream Deck** (registration compiles key
-sets: standalone intents into a system group, one sidebar group per
-booklet, Status/Step/Task dials with live color bars) and a **browser
-hub window** (opened automatically at boot; one tab per seat: card
-stream / search-IME input line / terminal drawer). Everything works
-without a deck — the panels and the IME are a complete trigger surface.
+## See it work
+
+<!-- FULL WALKTHROUGH: YouTube link goes here (~8 min). Chapters =
+     the six section clips:
+     1 create your protocol
+     2 the agent grounds your customization against your local environment
+     3 implement the tested solution
+     4 register the package — the keyset auto-compiles into the Elgato app
+     5 start using your protocol
+     6 lifecycle control from the Stream Deck -->
+
+![The hub's engine tab: an intent pinned on the input line, Enter fires](docs/img/hub.png)
 
 ## Getting started
 
@@ -115,6 +112,33 @@ Your own first one: tell the sidecar (the Terminal in the hub's first
 tab) about one thing you want push-button — it opens the ticket, writes
 the files, registers → the panel raises a registration card → you
 Approve → the key face compiles and goes live.
+
+## The model
+
+Two species, three seats, one resident engine:
+
+- **intent** — a stateless one-way order (an E pseudo-code function
+  body inside the three-section I-E-R declaration); triggering it
+  delivers to the **x·solo executor seat** (headless, one process per
+  order, parallel). Optional `procedures` preludes (the engine's
+  built-in physical layer, e.g. `screenshot`, mouse-anchored)
+  collect materials before delivery. The step grammar is a compact
+  closed verb set owned by the engine — see `docs/INTENT_SPEC.md`.
+- **protocol** — a stateful multi-round bracket ("booklet"; the test:
+  does the next step need to remember the last one). Each booklet gets a
+  **resident instance seat** (x·\<booklet\>): the power key opens the
+  bracket, member keys deliver steps, pressing power again runs the
+  closing ceremony; the seat's home and memory persist across sessions,
+  and booklets run in parallel.
+- **sidecar** — the resident interaction/maintenance seat: creation,
+  revision, surgery, rework, sim QA; the compiler of every asset.
+
+Physical entry points: a **Stream Deck** (registration compiles key
+sets: standalone intents into a system group, one sidebar group per
+booklet, Status/Step/Task dials with live color bars) and a **browser
+hub window** (opened automatically at boot; one tab per seat: card
+stream / search-IME input line / terminal drawer). Everything works
+without a deck — the panels and the IME are a complete trigger surface.
 
 ## Stream Deck
 
