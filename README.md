@@ -24,7 +24,7 @@ from a one-sentence wish, then running it from the deck.
 Tell the sidecar, in plain language, what you want as buttons. That is
 the entire input — no config files, no prompt engineering.
 
-<!-- STEP 1 VIDEO: drag readme-step1.mp4 here in the GitHub web editor --> https://github.com/user-attachments/assets/1f8f7177-0377-4fb9-a12e-d297311e2990
+<!-- STEP 1 VIDEO: https://github.com/user-attachments/assets/2ea31d76-5f0b-43f7-aded-518d4e0e7151 --> 
 
 
 ### 2 · It grounds your customization against your local environment
@@ -33,7 +33,7 @@ The agent probes the machine itself — screens, devices, installed
 tools, your folder layout — and asks only the real forks, each with
 its tradeoffs spelled out.
 
-<!-- STEP 2 VIDEO: drag readme-step2.mp4 here --> https://github.com/user-attachments/assets/2ea31d76-5f0b-43f7-aded-518d4e0e7151
+<!-- STEP 2 VIDEO: [drag readme-step2.mp4 here](https://github.com/user-attachments/assets/1f8f7177-0377-4fb9-a12e-d297311e2990) --> 
 
 ### 3 · It implements a tested solution
 
