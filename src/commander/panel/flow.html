@@ -147,6 +147,8 @@
   <span class="dot" id="dot"></span>
   <h1 id="title">protocol</h1>
   <span class="seat" id="seatlabel"></span>
+  <span class="task" id="stepline" title="Live step/task state — same
+source the deck dials read"></span>
   <span class="task" id="taskline" title="Click for the task ledger
 (retry / cancel live there)" style="cursor:pointer"></span>
   <button id="termbtn" title="Terminal drawer — answer the trust wizard
@@ -646,6 +648,42 @@ click or Esc to unpin"></span>
     }
   }
   connect();
+  // Step/task feedback parity with the deck (user finding
+  // 2026-08-26): the deck's Status/Step and Engine·Task dials update
+  // per member step, but the panel only spoke in cards — a running
+  // booklet looked frozen between receipts. Poll the same status
+  // probes the dials read (unjournaled by design) and show the
+  // current step + state in the header with the shared color rule.
+  const stepEl = document.getElementById("stepline");
+  const stCls = w => ({running: "st-running", done: "st-done",
+                       await: "st-gated", gated: "st-gated",
+                       queued: "st-queued", draining: "st-gated",
+                       idle: "st-queued", down: "st-failed",
+                       failed: "st-failed"})[w] || "";
+  async function pollStep() {
+    try {
+      const url = EPLANE
+        ? "/trigger?engine=task"
+        : "/trigger?protocol=" + encodeURIComponent(PNAME)
+          + "&op=status";
+      const r = await (await fetch(url)).json();
+      let label = "", word = "";
+      if (EPLANE) {
+        if (r && r.name && r.status) {
+          word = txt(r.status);
+          label = txt(r.name) + (r.more ? " +" + r.more : "")
+            + " · " + word;
+        }
+      } else if (r && r.open) {
+        word = txt(r.step ? (r.step_state || r.status) : r.status);
+        label = (r.step ? txt(r.step) + " · " : "") + word;
+      }
+      stepEl.textContent = label;
+      stepEl.className = "task " + stCls(word);
+    } catch (_) { /* engine offline — the overlay owns that story */ }
+  }
+  setInterval(pollStep, 3000);
+  pollStep();
   // resync (same as observe): ledger frames can be missed, so
   // re-fetch periodically + whenever the tab returns to foreground
   const resync = () => {
