@@ -1,84 +1,71 @@
+<div align="center">
 
 # Intents for Claude Code
 
 **An input method for agency.**
+
 Talk once — it compiles how you use this machine into push-button
 assets. From then on, it's a button.
+
+[**Watch the demo**](docs/DEMO.md) · [Setup](docs/SETUP.md) · [User guide](docs/GUIDE.md)
+
+<img src="docs/img/hub.png" alt="The hub: one tab per seat — card stream, input line, terminal drawer" width="860">
+
+</div>
 
 **v0.1.0 (M26 baseline)** — a personal customization layer on top of
 the [Claude Code](https://claude.com/claude-code) harness. You
 describe a habit once, in conversation; the engine compiles it into a
 declared, schema-checked asset with acceptance criteria; a real agent
 seat runs it every time you press its key — on a Stream Deck, or in
-the browser hub. You never type prompts to make things run. (Project
-name: Intents for Claude Code; the engine keeps **IntentOS** as its
-internal name — you will see it on panels and key sets.)
+the browser hub. (Project name: Intents for Claude Code; the engine
+keeps **IntentOS** as its internal name — you will see it on panels
+and key sets.)
 
-## Demo — a sentence becomes a button
+## What's different
 
-One real session, start to finish: minting a screen-recording booklet
-from a one-sentence wish, then running it from the deck.
+#### The unit of interaction is a trigger, not a conversation
 
-### 1 · Create your protocol
+On a plain harness, every job starts by typing a prompt and
+re-assembling context. Here you say it once; from then on it fires
+from a key — a Stream Deck button or the hub's input line. The prompt
+disappears from daily use.
 
-Tell the sidecar, in plain language, what you want as buttons. That is
-the entire input — no config files, no prompt engineering.
+<img src="docs/img/deck-keys.png" alt="A booklet's key group dragged onto a Stream Deck page" width="720">
 
-https://github.com/user-attachments/assets/2ea31d76-5f0b-43f7-aded-518d4e0e7151
+#### Registration is compilation
 
+What you teach it doesn't dissolve with the session — it lands as
+**files you own**: an I-E-R declaration in a closed verb grammar,
+machine-validated at registration, acceptance criteria fixed at
+compile time. Revise, retire, revive — all through the same
+conversation, every change behind one human approval card.
 
-### 2 · It grounds your customization against your local environment
+<img src="docs/img/booklet.png" alt="A booklet tab with its member steps as pills" width="720">
 
-The agent probes the machine itself — screens, devices, installed
-tools, your folder layout — and asks only the real forks, each with
-its tradeoffs spelled out.
+#### Seats have economics
 
-https://github.com/user-attachments/assets/1f8f7177-0377-4fb9-a12e-d297311e2990
+Minting is expensive once: the sidecar compiles on a strong model.
+Running is cheap forever: headless executor seats on a fast model,
+one process per order, in parallel. A booklet's resident seat keeps
+its own home and memory — the longer it lives with you, the better it
+hosts that one workflow. Every run hands back a receipt: duration,
+calls, tokens.
 
-### 3 · It implements a tested solution
+<img src="docs/img/step-result.png" alt="A step's result card with its receipt and follow-up buttons" width="720">
 
-Declarations, member steps, and tool scripts get written — and
-live-fired against this machine before anything is submitted.
+#### It rides your harness's constitution
 
-https://github.com/user-attachments/assets/6c883e45-530c-4e8c-90ef-769b7d8c65c2
+Every seat is a real Claude Code CLI session on your own account, in
+the CLI's own permission mode. The allow side belongs to the harness;
+the engine owns only the deny floor — and it never presses an
+authorization key for you. Loopback only, three gates on the network
+face.
 
-### 4 · Register — the keyset compiles into the Elgato app
+<img src="docs/img/terminal.png" alt="The terminal drawer: the seat is a real Claude Code session" width="720">
 
-Registration raises one approval card, and that click is yours by
-design. On approve the whole booklet goes live and its key set
-auto-compiles into the Stream Deck app, ready to drag onto your deck.
-
- https://github.com/user-attachments/assets/89cff055-dd37-4d2c-baa2-6ca746b69135
-
-### 5 · Start using it
-
-https://github.com/user-attachments/assets/e8039b88-02b7-4dc0-ac7a-ad8f56e19268
-
-### 6 · Lifecycle control from the Stream Deck
-
-Open the bracket, run steps, wrap up and settle the books — the whole
-lifecycle rides on physical keys.
-
-https://github.com/user-attachments/assets/478ed846-4200-461d-af6a-6f2bb6efc04d
-
-### And the other species: a standalone intent
-
-A booklet is a session; an intent is **one press, one run, no
-session**. Here a market-board intent fetches three boards of quotes
-and the day's headlines, renders an offline page, and hands back a
-receipt — duration, calls, tokens.
-
-https://github.com/user-attachments/assets/64ac4ae5-403e-42ce-ad1c-7517d05b96e8
-
-### Revision is the same conversation
-
-Nothing freezes at minting. The first cut of this recording booklet
-couldn't capture more than one device in a session — so you just say
-so. The sidecar revises the declarations, re-registers the booklet
-whole, and one approval card later the improved version is live.
-Edit-and-re-register is the normal loop, not an exception.
-
-https://github.com/user-attachments/assets/a887efb4-1496-4fe1-b6db-a718e6d78302
+**[See the full demo →](docs/DEMO.md)** — a recording booklet minted
+from one sentence, used from the deck, then revised the same way.
 
 ## Install
 
@@ -172,6 +159,7 @@ faces, binding, and the dial bars are walked through in
 
 | Document | Purpose |
 |---|---|
+| `docs/DEMO.md` | **The full walkthrough on video**: a booklet minted from one sentence, used from the deck, revised the same way |
 | `docs/SETUP.md` | **Install & first run**: requirements, first-run authorization, cost knobs, cold-start templates, uninstall |
 | `docs/GUIDE.md` | **The user guide — start here**: creating intents & booklets with the sidecar, triggering, Stream Deck binding, the folder map, tasks, troubleshooting |
 | `docs/CONFIG.md` | **Every knob**: CLI flags / models & effort / limits & clocks, and how to change them |
