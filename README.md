@@ -52,7 +52,7 @@ auto-compiles into the Stream Deck app, ready to drag onto your deck.
 
 ### 5 · Start using it
 
-https://github.com/user-attachments/assets/7a970b55-3b5a-45a7-b1c5-10ac8f6a728e
+https://github.com/user-attachments/assets/e8039b88-02b7-4dc0-ac7a-ad8f56e19268
 
 ### 6 · Lifecycle control from the Stream Deck
 
