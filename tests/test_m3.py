@@ -351,7 +351,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     m = rpc(2, "tools/list")
     check("13 bridge tools/list (M26 two-face law): default = "
           "admin face's nine -- settle/issue/register/retire/"
-          "index/search/catalog/sense/fetch; perm_gate/ask_user "
+          "index/search/catalog/sense/fetch; perm_gate/ask_user_through_os "
           "belong to the exec face",
           m and {t["name"] for t in m["result"]["tools"]}
           == {"task_done", "intent_submit", "workspace_submit",

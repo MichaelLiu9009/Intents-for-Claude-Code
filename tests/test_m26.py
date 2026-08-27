@@ -839,25 +839,25 @@ def bridge_tools(face_args):
 exec_names, exec_wrong, exec_descs = bridge_tools(["--face", "exec"])
 check("7a exec face = the three-piece set (S2: step_done is a "
       "bracket-seat verb, solo face no longer pays for dead tools)",
-      exec_names == {"task_done", "ask_user", "perm_gate"})
+      exec_names == {"task_done", "ask_user_through_os", "perm_gate"})
 check("7b wrong-face verb rejected (intent_submit not on exec "
       "face)",
       "not on this seat's face"
       in exec_wrong["result"]["content"][0]["text"])
 proto_names, _, proto_descs = bridge_tools(["--face", "proto"])
-check("7b2 proto face = the three-piece set + step_done, ask_user "
+check("7b2 proto face = the three-piece set + step_done, ask_user_through_os "
       "swaps to bracket-law copy (C1: no E on the host seat, real "
       "forks phrasing)",
-      proto_names == {"task_done", "ask_user", "perm_gate",
+      proto_names == {"task_done", "ask_user_through_os", "perm_gate",
                       "step_done"}
-      and "real forks" in proto_descs["ask_user"]
-      and "E explicitly says" not in proto_descs["ask_user"]
-      and "E explicitly says" in exec_descs["ask_user"])
+      and "real forks" in proto_descs["ask_user_through_os"]
+      and "E explicitly says" not in proto_descs["ask_user_through_os"]
+      and "E explicitly says" in exec_descs["ask_user_through_os"])
 admin_names, _, _ = bridge_tools(["--face", "admin"])
 check("7c admin face = create/query/settle, zero exec verbs (no "
-      "perm_gate/ask_user/step_done)",
+      "perm_gate/ask_user_through_os/step_done)",
       "intent_submit" in admin_names and "workspace_submit" in admin_names
-      and "perm_gate" not in admin_names and "ask_user" not in admin_names
+      and "perm_gate" not in admin_names and "ask_user_through_os" not in admin_names
       and "step_done" not in admin_names)
 legacy_names, _, _ = bridge_tools(["exec"])
 check("7d legacy positional-arg exec stays compatible",

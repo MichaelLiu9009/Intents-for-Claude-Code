@@ -158,7 +158,7 @@ tree-kill fallback); pressing Shutdown during the ceremony forces it.
 The instance home (workspace, memory, permission sediment) persists
 across sessions.
 
-**Asking the human**: `ask_user` raises a card with ≤12 options and
+**Asking the human**: `ask_user_through_os` raises a card with ≤12 options and
 also accepts a typed free-form answer (`{typed: true}`); agents must
 not invent a "manual input" pseudo-option. Cards flow chronologically
 in the seat's stream and dim when answered.
@@ -214,7 +214,7 @@ Interrupt, so cancel (and retry) do not apply to bracket tasks.
   **admin** (sidecar; 9 verbs — task_done, intent_submit,
   workspace_submit, intent_retire, intent_memory_index, intent_search,
   intent_catalog, match_protocol, intent_get; **zero execution
-  verbs**), **exec** (x·solo; 3 — task_done, ask_user, perm_gate),
+  verbs**), **exec** (x·solo; 3 — task_done, ask_user_through_os, perm_gate),
   **proto** (booklet seats; exec + step_done). Wrong-face verbs are
   rejected at the bridge, before dispatch.
 - **Verdicts stay with the human**: the engine records mechanical

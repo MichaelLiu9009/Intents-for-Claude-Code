@@ -166,11 +166,11 @@ MCP_SEAT_EXEC = "exec"
 # quality allows"): exec = x·solo surface (three-piece set — step_done
 # is exclusive to the protocol seat; hanging it on the solo surface
 # costs 88 tok per order in dead tool fees); proto = the bracket seat
-# surface (+step_done, and ask_user's description swaps in bracket
+# surface (+step_done, and ask_user_through_os's description swaps in bracket
 # wording — a host seat has no E, "only ask where E names it" is
 # wrong for it).
 MCP_SEAT_PROTO = "proto"
-XSOLO_MCP_TOOLS = ("task_done", "ask_user", "perm_gate")
+XSOLO_MCP_TOOLS = ("task_done", "ask_user_through_os", "perm_gate")
 # Second-cut completion (2026-08-17): (1) built-in tool-surface
 # allowlist (CLI --tools) — the interpreter seat keeps only the five
 # file tools + shell, the WebSearch/Agent/TodoWrite row never enters
@@ -822,7 +822,7 @@ XSOLO_PACKAGE_MD = """\
 by line, branching on its condition lines; a condition not listed takes
 that line's default else. Off-script situations (E doesn't cover it /
 environment mismatch) → ask only at forks where E explicitly says
-ask_user, otherwise settle failed — no exploring, no improvising.
+ask_user_through_os, otherwise settle failed — no exploring, no improvising.
 
 ## I · input (procedure-staged context + this trigger's input)
 {user_input}
@@ -874,7 +874,7 @@ Three steps per order, fixed:
    anywhere else reaches them.
 
 Human interaction: an insufficient permission pops a card and waits
-(engine-wired, invisible to you); `ask_user` only where E says so.
+(engine-wired, invisible to you); `ask_user_through_os` only where E says so.
 Beyond these, stay silent.
 
 Iron rules:
@@ -930,7 +930,7 @@ this one workflow.
   household and `memory/` stay; the next Start revives you here.
 - One bracket, one ledger entry: everything between Start and Shutdown
   is a single task — member steps never open new ones.
-- Questions to the user go through `ask_user` (card flow of this
+- Questions to the user go through `ask_user_through_os` (card flow of this
   window, ≤12 options; the card also takes a typed free-form answer,
   so an off-list reply is always reachable). Their Approve key answers
   the newest card. Ask only at real forks; prefer defaults. Open a

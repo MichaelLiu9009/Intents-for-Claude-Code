@@ -12,7 +12,7 @@ table the channel already receives. Three jobs, all mechanical:
    chains ledger) read `runtime/tasks/<id>/template.md`, copy the full
    text, then approve.
 3. **Call the human** -- anything that genuinely needs a human call
-   (ask_user / AskUserQuestion mirror cards, out-of-bounds writes,
+   (ask_user_through_os / AskUserQuestion mirror cards, out-of-bounds writes,
    denials) is never answered on their behalf; it's written into
    `NEEDS-ME.md`.
 
@@ -172,7 +172,7 @@ class Hand:
             return
 
         # 2) Execution-layer permission gate (perm_gate) / question
-        # gate (ask_user)
+        # gate (ask_user_through_os)
         if kind == "perm" and ("allow" in acts or "deny" in acts):
             ok, why = self.judge(body.split("——", 1)[0], body)
             self.send({"type": "card_answer", "id": cid,

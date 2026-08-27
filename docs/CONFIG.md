@@ -47,7 +47,7 @@
 | `HOST_MODEL` / `HOST_EFFORT` / `HOST_THINKING` | `sonnet` / `medium` / 10_000 | general host seats (x·\<booklet\>); `--model` can override the model |
 | `XSOLO_MODEL` / `XSOLO_EFFORT` / `XSOLO_THINKING` | `sonnet` / `low` / 4096 | the x·solo executor seat (standalone intents), pinned cheap |
 | `XSOLO_CLI_TOOLS` | Bash,Read,Write,Edit,Glob,Grep | the executor's CLI tool face |
-| `XSOLO_MCP_TOOLS` | task_done, ask_user, perm_gate | the executor's three MCP verbs (exec face) |
+| `XSOLO_MCP_TOOLS` | task_done, ask_user_through_os, perm_gate | the executor's three MCP verbs (exec face) |
 | `XPERM_TOOL` | `mcp__intentOS__perm_gate` | `--permission-prompt-tool` target (permission asks go to the card stream) |
 | `SEAT_PERMISSION_MODE` | `auto` | the CLI permission mode every seat is spawned with (`--permission-mode` flag, written by the engine); empty string = no flag (harness default). The allow side of daily approvals lives here |
 | `PERM_ALLOW` | `[]` | the **always-allow ledger**: rules granted via "Always allow" on permission cards land here (in `config.json`), and the engine materializes them into every seat's allow list. Human-editable — remove a line to revoke |

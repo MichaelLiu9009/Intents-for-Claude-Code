@@ -13,7 +13,7 @@ issues found on the real deck rig) --
     grant unlimited grace, not false-alarm "swallowed by the wizard".
 (4) retry acceptance-card copy: must make explicit that this is the
     acceptance surface for a retry the user themselves initiated.
-(5) ask_user free-text capture: the panel's typed-line action=line
+(5) ask_user_through_os free-text capture: the panel's typed-line action=line
     was previously rejected -- forcing the agent to invent a fake
     "manual input" button.
 
@@ -134,7 +134,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           and "suspended" in rc["body"]
           and "your gate" in rc["body"])
 
-    # ---- (5) ask_user free-text capture (action=line) -------------------
+    # ---- (5) ask_user_through_os free-text capture (action=line) -------------------
     box = {}
 
     def ask():

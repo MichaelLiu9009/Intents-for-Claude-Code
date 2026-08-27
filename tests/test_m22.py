@@ -228,7 +228,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           and "no answer" in r.get("message", ""))
     defaults.XGATE_WAIT_S = 300.0
 
-    # ---- ask_user: form path ---------------------------------------------
+    # ---- ask_user_through_os: form path ---------------------------------------------
     th = threading.Thread(target=call_gate, args=("form", {
         "verb": "ask_user", "question": "手账写到哪本?",
         "options": ["主本", "灵感本", "废纸篓"], "token": xtok}))

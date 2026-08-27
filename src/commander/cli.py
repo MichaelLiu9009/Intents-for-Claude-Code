@@ -136,6 +136,17 @@ TPL_PROTO = {
     "scenario": "translate",
     "subtype": "interactive",
     "members": ["language", "translate"],
+    # Ask-on-open is a CONTRACT, not model initiative (live-fire
+    # 2026-08-26: with prep empty the seat greeted and stood by —
+    # exactly per the "not written means not asked" doctrine — and
+    # the user waited for a language card that never came. If a
+    # booklet wants a question the moment it opens, it says so here).
+    "prep": ("run the language member's E now: one "
+             "ask_user_through_os card offering English, 中文, "
+             "日本語, Español, Français, Deutsch (free typing "
+             "welcome); save the answer as the bracket's target "
+             "language and confirm it in one line. Then stand by "
+             "for member keys."),
 }
 
 TPL_SKILL = """\
@@ -144,12 +155,14 @@ TPL_SKILL = """\
 You host the **translator** booklet: live translation of whatever is
 on the user's screen, one keypress per shot.
 
-State you carry across the bracket: **the target language** — default
-English until the `language` step sets it.
+State you carry across the bracket: **the target language** — the
+·open prep asks for it the moment the bracket opens (that is declared
+in the booklet's `prep`, not left to your judgment); a later
+`language` step replaces it.
 
 ## Steps
 
-- **language** — run its E: raise one card (ask_user) offering common
+- **language** — run its E: raise one card (ask_user_through_os) offering common
   languages plus free typing; remember the answer as the bracket's
   target language and confirm it in one line.
 
@@ -157,7 +170,7 @@ English until the `language` step sets it.
   screenshot the engine just took of the monitor under the user's
   mouse. Read that image, then translate **all visible text** into
   the target language. Deliver the translation as one card
-  (ask_user): question = the translation itself (compact — lead with
+  (ask_user_through_os): question = the translation itself (compact — lead with
   what matters if space is tight), options = Done, Again. If "Again"
   comes back, redo the translation with more care — the card returned,
   so assume something was off or truncated.
@@ -259,6 +272,7 @@ def _seed(ws_root: Path) -> int:
         return 0
     st.proto_stage("translator", subtype="interactive",
                    scenario=TPL_PROTO["scenario"],
+                   prep=TPL_PROTO["prep"],
                    staged_hash=text_hash(TPL_SKILL))
     st.proto_compile_unit("translator",
                           [TPL_LANGUAGE, TPL_TRANSLATE],

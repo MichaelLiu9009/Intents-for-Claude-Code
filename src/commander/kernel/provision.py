@@ -280,7 +280,7 @@ def provision_proto_home(workspace: Path, pname: str,
     (workspace boundary = permission boundary), the engine only mints
     the deny floor and never grants approvals on the user's behalf;
     (3) **a lean interface** — MCP exposes only the exec surface
-    (task_done/ask_user/perm_gate); unused verbs are entropy that lets
+    (task_done/ask_user_through_os/perm_gate); unused verbs are entropy that lets
     the executor drift from its intended behavior (user ruling
     2026-08-22).
 
@@ -328,7 +328,7 @@ def provision_proto_home(workspace: Path, pname: str,
         {"mcpServers": {"intentOS": {
             "command": sys.executable,
             # surface split (S2/C1): the bracket seat uses the proto
-            # surface (+step_done, ask_user swaps in bracket-rule copy)
+            # surface (+step_done, ask_user_through_os swaps in bracket-rule copy)
             "args": ["-m", "commander.mcp", str(ws), "--face",
                      defaults.MCP_SEAT_PROTO],
             "alwaysLoad": True,

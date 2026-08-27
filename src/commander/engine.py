@@ -540,7 +540,7 @@ class Engine:
                     f"closed the bracket; the engine has settled the "
                     f"task — no task_done needed, just wrap up whatever "
                     f"is in flight")
-        # Stale-gate sweep (audit 2026-08-26): an unanswered ask_user
+        # Stale-gate sweep (audit 2026-08-26): an unanswered ask_user_through_os
         # card survives the bracket and, because the serialization
         # guard counts ANY open ask card on this seat, would lock the
         # NEXT bracket's member keys behind a question nobody can
@@ -3969,7 +3969,7 @@ class Engine:
             q = str(f.get("question") or "").strip()
             raw_opts = f.get("options")
             if not q or not isinstance(raw_opts, list) or not raw_opts:
-                return {"error": "ask_user: question + options required "
+                return {"error": "ask_user_through_os: question + options required "
                                  "(multiple choice, ≤12 options)"}
             # Cap of 12 (live-fire precedent 2026-08-23 late night:
             # the practice-log booklet's 9 pieces hit the old cap
@@ -3980,7 +3980,7 @@ class Engine:
             opts = [str(o).strip()[:80] for o in raw_opts
                     if str(o).strip()][:12]
             if not opts:
-                return {"error": "ask_user: all options empty"}
+                return {"error": "ask_user_through_os: all options empty"}
             ans = self._gate_wait(
                 "ask", f"Executor question: {caller}", q[:400],
                 [{"action": f"opt:{i}", "label": o}

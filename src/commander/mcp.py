@@ -204,7 +204,7 @@ TOOLS = [
                          "tool_name": {"type": "string"},
                          "input": {"type": "object"}},
                      "required": ["tool_name"]}},
-    {"name": "ask_user",
+    {"name": "ask_user_through_os",
      "description": "Multiple-choice question to the user (seat-"
                     "neutral, AskUserQuestion-shaped): question + "
                     "options (≤12), routed to the card flow, blocks for "
@@ -217,7 +217,7 @@ TOOLS = [
                     "there is no multi-select — for pick-several, ask "
                     "one item at a time, or say combinations are "
                     "welcome on the typed line. Executor orders: ask "
-                    "ONLY at forks where E explicitly says ask_user — "
+                    "ONLY at forks where E explicitly says ask_user_through_os — "
                     "not written means not asked; if a default works, "
                     "don't ask. On timeout take the default or fail "
                     "naming the missing decision.",
@@ -319,12 +319,12 @@ TOOLS = [
 # Face split (S2/C1, 2026-08-23): exec = the solo three-piece set
 # (step_done is a verb exclusive to the bracket seat; on the solo
 # face it's dead-weight tool cost); proto = the bracket seat's four
-# plus a swapped ask_user copy for bracket law (the host seat has no
+# plus a swapped ask_user_through_os copy for bracket law (the host seat has no
 # E).
 FACE_EXEC = set(defaults.XSOLO_MCP_TOOLS)
 FACE_PROTO = FACE_EXEC | {"step_done"}
-# Bracket-seat wording for ask_user (C1: "only ask when E names it" is wrong for the host seat)
-PROTO_DESC = {"ask_user": (
+# Bracket-seat wording for ask_user_through_os (C1: "only ask when E names it" is wrong for the host seat)
+PROTO_DESC = {"ask_user_through_os": (
     "Multiple-choice question to the user (question + options ≤12, "
     "routed to the card flow, blocks for the answer, returns "
     "{choice} — {typed: true} when the user typed a free-form answer "
@@ -439,7 +439,7 @@ def _dispatch(workspace: Path, name: str, args: dict) -> str:
             "input": args.get("input") if isinstance(args.get("input"),
                                                      dict) else {}},
             timeout=defaults.XGATE_WAIT_S + 30)
-    if name == "ask_user":
+    if name == "ask_user_through_os":
         return _call_engine(workspace, {
             "verb": "ask_user",
             "question": str(args.get("question") or ""),

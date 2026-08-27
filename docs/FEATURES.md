@@ -325,8 +325,8 @@ technical reference (written for agents and contributors).
   verbs: task_done, intent_submit, workspace_submit, intent_retire,
   intent_memory_index, intent_search, intent_catalog, match_protocol,
   intent_get — zero execution verbs), exec (x·solo, 3: task_done,
-  ask_user, perm_gate), proto (booklet seats, exec + step_done).
-  Wrong-face verbs are rejected at the bridge. `ask_user` contract:
+  ask_user_through_os, perm_gate), proto (booklet seats, exec + step_done).
+  Wrong-face verbs are rejected at the bridge. `ask_user_through_os` contract:
   ≤12 options, typed free-form accepted, no pseudo-options.
 - **Anchors**: `TOOLS` `FACE_ADMIN` `FACE_EXEC` `FACE_PROTO`
   `PROTO_DESC` `_call_engine` `MCP_TOKEN_ENV`. Caselaw: a schema
