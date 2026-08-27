@@ -69,31 +69,29 @@ Open the bracket, run member steps from keys; it remembers, across sessions.</em
 
 Control ships as physical keys with a fixed face grammar: **graphics
 are system keys, text faces are your assets, color is state.** Every
-workspace compiles two kinds of key groups:
+workspace compiles two kinds of key groups.
 
 **IntentOS — the system group** (one per workspace)
 
-| Face | Key | What it does |
-|---|---|---|
-| power glyph · status dot | **Engine** | tap starts the engine — even a dead one, the launch command is baked into the key; hold shuts it down |
-| green check | **Solo · Approve** | answers the newest executor card — always *allow once*; the physical key can never mint a permanent grant |
-| red square | **Solo · Cancel** | force-stops the newest running order |
-| orange text faces | *your intents* | one key per registered intent — press to fire it |
-| dials: **Status** · **Task** | | read-only touch-strip bars: engine up/down, and the newest in-flight order with its state color |
+| | |
+|---|---|
+| <img src="docs/img/keys/engine.png" width="56" alt="power glyph with status dot"> | **Engine** — tap starts the engine, even a dead one: the launch command is baked into the key. Hold shuts it down. The dot is live engine state. |
+| <img src="docs/img/keys/approve.png" width="56" alt="green check"> | **Solo · Approve** — answers the newest executor card. Always *allow once*: the physical key can never mint a permanent grant. |
+| <img src="docs/img/keys/cancel.png" width="56" alt="red square"> | **Solo · Cancel** — force-stops the newest running order. |
+| <img src="docs/img/keys/intent.png" width="56" alt="orange text key"> | **Your intents** — one orange text key per registered intent. Press to fire it. |
+| <img src="docs/img/keys/dial-engine.png" width="110" alt="engine status dial"> <img src="docs/img/keys/dial-task.png" width="110" alt="task dial"> | **Status · Task** — read-only touch-strip dials: engine up/down, and the newest in-flight order with its state color. |
 
 **Per booklet — one group each** (compiled the moment you approve it)
 
-| Face | Key | What it does |
-|---|---|---|
-| power glyph | **Start / Shutdown** | one toggle: a closed booklet opens, an open one wraps up; pressing again mid-wrap forces the close |
-| green check | **Approve** | that booklet's newest waiting card |
-| yellow square | **Interrupt** | cuts the seat's current turn; the order itself survives |
-| dark text faces | *member steps* | one key per member — press to run that step |
-| dials: **Status** · **Step** | | open/closed + seat liveness · the step now running |
+| | |
+|---|---|
+| <img src="docs/img/keys/power.png" width="56" alt="power glyph"> | **Start / Shutdown** — one toggle: a closed booklet opens, an open one wraps up. Pressing again mid-wrap forces the close. |
+| <img src="docs/img/keys/approve.png" width="56" alt="green check"> | **Approve** — that booklet's newest waiting card. |
+| <img src="docs/img/keys/interrupt.png" width="56" alt="yellow square"> | **Interrupt** — cuts the seat's current turn; the order itself survives. |
+| <img src="docs/img/keys/member.png" width="56" alt="dark text key"> | **Member steps** — one dark text key per member. Press to run that step. |
+| <img src="docs/img/keys/dial-status.png" width="110" alt="status dial"> <img src="docs/img/keys/dial-step.png" width="110" alt="step dial"> | **Status · Step** — open/closed plus seat liveness · the step now running. |
 
-<p align="center"><img src="docs/img/deck-keys.png" width="560" alt="The two default key groups in the Stream Deck sidebar: IntentOS system keys and a booklet's group"></p>
-<p align="center"><em>Both groups as they appear in the Stream Deck app — drag onto any page.
-Binding flow and the full face grammar: <a href="docs/GUIDE.md">the user guide</a>.</em></p>
+<p align="center"><em>Binding is drag-and-drop; the full flow and the face grammar are in <a href="docs/GUIDE.md">the user guide</a>.</em></p>
 
 ## Install
 
