@@ -55,9 +55,15 @@ Open the bracket, run member steps from keys; it remembers, across sessions.</em
   own account, in the CLI's own permission mode. The engine owns only
   the deny floor — and it never presses an authorization key for you.
 
-The stance behind all four — why control must live outside the
-reasoning realm, and why the unit of governance is the boundary, not
-the approval click — is written out in **[the design memo](docs/MEMO.md)**.
+<div align="center">
+
+> *"An operating system never asks a process to police its own memory
+> access; it draws an address space around it, from outside. Every
+> mature permission system ends up governing shapes, not clicks."*
+>
+> — **[Control from the outside](docs/MEMO.md)**, the design memo
+
+</div>
 
 ## Install
 
