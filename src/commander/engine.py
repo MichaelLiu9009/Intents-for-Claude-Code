@@ -768,10 +768,10 @@ class Engine:
 
     def _proto_shutdown(self, pname: str, force: bool = False) -> dict:
         """Shutdown key: **the wrap-up ceremony** (user ruling
-        2026-08-24: ·收 made real) — if the bracket is open and the
-        seat is alive, first deliver the system ·收 step (the
-        booklet's declared wrapup, defaulting to wrapping up
-        whatever's in flight), wait for step_done(·收) or the grace
+        2026-08-24: ·收 made real; 2026-08-26: content fixed) — if
+        the bracket is open and the seat is alive, first deliver the
+        system ·收 step (the engine-owned final-cleanup contract,
+        never a declared text), wait for step_done(·收) or the grace
         clock, **then** settle the account + graceful seat exit
         (ESC + /exit, tree-kill as fallback) + the window self-
         closes. Pressing Shutdown again = force (skip the wait);
@@ -790,9 +790,12 @@ class Engine:
         if (br is not None and not force
                 and isinstance(inst0, ProtoInstance) and inst0.alive()):
             self._wrapping.add(pname)
-            proto = self.store.proto_get(pname) or {}
-            wtxt = (str(proto.get("wrapup") or "").strip()
-                    or defaults.PROTO_WRAP_DEFAULT)
+            # Wrapup is engine-owned (user ruling 2026-08-26): ·收 is
+            # the fixed final-cleanup contract — declared wrapups are
+            # refused at registration and never reach this path (a
+            # declared one once smuggled ceremony in and blocked
+            # shutdown).
+            wtxt = defaults.PROTO_WRAP_FINAL
             inst0.wrap_evt.clear()
             inst0.enqueue_step(
                 f"[task {br['id']}] step ·收 | {wtxt} — when done, call "
@@ -4959,9 +4962,11 @@ class Engine:
                          f"(3–10 counting the two system slots ·启/"
                          f"·收 — **opening/closing are not members**: "
                          f"they are system steps, opening setup goes "
-                         f"in the prep field, the closing step in "
-                         f"wrapup, auto-delivered at bracket open/"
-                         f"close); skill.md holds only the "
+                         f"in the prep field; the closing step (·收) "
+                         f"is the engine's fixed final-cleanup "
+                         f"contract, not declarable — closing domain "
+                         f"work belongs in a member step); "
+                         f"skill.md holds only the "
                          f"aggregation. When done, "
                          f"workspace_submit(name={name}) submits the "
                          f"whole booklet at once — one gate, atomic "
@@ -5077,10 +5082,12 @@ class Engine:
                     mprobs.append(f"member '{m}' is a reserved system "
                                   f"slot — opening/closing are not "
                                   f"members: opening setup goes in "
-                                  f"protocol.json's prep field, the "
-                                  f"closing step in wrapup; the "
-                                  f"engine delivers them at bracket "
-                                  f"open/close")
+                                  f"protocol.json's prep field; the "
+                                  f"closing step (·收) is the "
+                                  f"engine's fixed final-cleanup "
+                                  f"contract, not declarable — "
+                                  f"closing domain work belongs in a "
+                                  f"member step the user presses")
                     continue
                 mit = self.store.intent(m)
                 if mit is not None and (mit.get("proto") or "") != name:
@@ -5115,18 +5122,19 @@ class Engine:
                 return {"error": f"workspace_submit: skill.md over "
                                  f"the cap ({len(skill)}/"
                                  f"{defaults.PROTO_SKILL_MAX} chars)"}
-            # ·启/·收 content (user ruling 2026-08-24): prep = the
-            # opening housekeeping, wrapup = the closing step --
-            # these are declaration fields, not members; over the
-            # limit rejects the whole catalog
+            # ·启 content (user ruling 2026-08-24): prep = the
+            # opening housekeeping — a declaration field, not a
+            # member; over the limit rejects the whole catalog.
+            # wrapup left this path (user ruling 2026-08-26): ·收 is
+            # engine-owned — a declared wrapup is refused by the
+            # schema gate, and the engine always delivers
+            # PROTO_WRAP_FINAL.
             prep = str(decl.get("prep") or "").strip()
-            wrapup = str(decl.get("wrapup") or "").strip()
-            for fld, val in (("prep", prep), ("wrapup", wrapup)):
-                if len(val) > defaults.PROTO_HOOK_MAX:
-                    return {"error": f"workspace_submit: {fld} over "
-                                     f"the cap ({len(val)}/"
-                                     f"{defaults.PROTO_HOOK_MAX} "
-                                     f"chars)"}
+            if len(prep) > defaults.PROTO_HOOK_MAX:
+                return {"error": f"workspace_submit: prep over "
+                                 f"the cap ({len(prep)}/"
+                                 f"{defaults.PROTO_HOOK_MAX} "
+                                 f"chars)"}
             stg = (self.workspace / defaults.RUNTIME_DIRNAME / "staging"
                    / f"protocol-{name}")
             stg.mkdir(parents=True, exist_ok=True)
@@ -5140,16 +5148,13 @@ class Engine:
                 name, subtype=str(decl.get("subtype") or "interactive"),
                 scenario=str(decl.get("scenario") or ""),
                 staged_hash=procrun.text_hash(skill),
-                prep=prep, wrapup=wrapup,
+                prep=prep, wrapup="",
                 born=(self.journal.session if self.journal else None))
             staged.append(f"skill.md  ({sh[:12]})")
             staged += mstaged
             staged.append("members: " + ", ".join(mem))
             if prep:
                 staged.append("prep (·启 system-step content): "
-                              "declared")
-            if wrapup:
-                staged.append("wrapup (·收 system-step content): "
                               "declared")
         # write the declared content back into the library (the
         # directory is source -- the copy on disk is authoritative)

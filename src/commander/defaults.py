@@ -763,17 +763,26 @@ PROTO_ROSTER_NONE = "(no members — free-form multi-round)"
 
 # ·启/·收 made real (user ruling 2026-08-24): open/close are **two
 # built-in system steps** — the engine auto-delivers them at bracket
-# open/close; the booklet declares their content in protocol.json
-# (prep = opening setup, wrapup = closing step). A user-built member
+# open/close. prep (opening setup) is declarable in protocol.json;
+# **wrapup is engine-owned** (user ruling 2026-08-26: a declared
+# wrapup smuggled extra ceremony in and blocked shutdown — ·收 is
+# the fixed final-cleanup contract below, closing domain work
+# belongs in a member step the user presses). A user-built member
 # can never occupy these two slots (reserved names are rejected at
 # registration).
 PROTO_PREP_NONE = ("(none declared — greet in one short line and "
                    "wait for member keys)")
-PROTO_WRAP_DEFAULT = ("settle whatever is in flight, flush the "
-                      "booklet's state to disk where it belongs, then "
-                      "one closing line to the user")
+PROTO_WRAP_FINAL = (
+    "this is the FINAL cleanup — the session is shutting down on the "
+    "grace clock right after (a second Shutdown press forces it "
+    "sooner). Do not start new work and do not improvise extra "
+    "ceremony. Stop and clean up everything this session started and "
+    "still owns — processes, windows, long-running jobs — closing "
+    "only what this booklet opened, never shared apps. Flush the "
+    "booklet's state to disk where it belongs, then one closing line "
+    "to the user")
 PROTO_WRAP_GRACE_S = 45.0     # wrap-up grace period: clock after the ·收 step is delivered, waiting for step_done
-PROTO_HOOK_MAX = 800          # word-count gate for prep/wrapup each (×2 for English; same order of magnitude as steps)
+PROTO_HOOK_MAX = 800          # word-count gate for prep (×2 for English; same order of magnitude as steps)
 PROTO_RESERVED_MEMBERS = ("·启", "·收", "开启", "结束", "收场",
                           "prep", "wrapup")
 

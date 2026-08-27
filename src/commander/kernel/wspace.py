@@ -185,7 +185,10 @@ PROTO_SCHEMA: dict = {
                 "the booklet, all or nothing, exactly matching "
                 "stateful situational interaction. **Opening/closing "
                 "are not members** (reserved names are rejected at "
-                "registration): their content goes in prep/wrapup."},
+                "registration): opening content goes in prep; "
+                "closing (·收) is the engine's fixed final-cleanup "
+                "contract, not declarable — closing domain work "
+                "belongs in a member step the user presses."},
     "prep": {
         "required": False, "kind": "text",
         "max": defaults.PROTO_HOOK_MAX,
@@ -195,17 +198,11 @@ PROTO_SCHEMA: dict = {
                 "the booklet's state and report where we left off, "
                 "pre-warm today's material. Empty = default (one "
                 "greeting line, then stand by)."},
-    "wrapup": {
-        "required": False, "kind": "text",
-        "max": defaults.PROTO_HOOK_MAX,
-        "desc": "content of the ·收 system step (closing step, E "
-                "prose): auto-delivered when the user presses "
-                "Shutdown; the seat finishes it and calls "
-                "step_done(member=\"·收\") before the books close and "
-                "the seat winds down (grace clock as fallback) — "
-                "e.g. settle the day's ledger to disk, one closing "
-                "line. Empty = default (gather what's in flight + a "
-                "closing line)."},
+    # wrapup left the schema (user ruling 2026-08-26): ·收 is
+    # engine-owned — the fixed final-cleanup contract
+    # (defaults.PROTO_WRAP_FINAL); closing domain work belongs in a
+    # member step the user presses. The validate() tail gives a
+    # declared wrapup its own teaching refusal.
 }
 
 
@@ -540,6 +537,18 @@ def validate(decl: dict, kind: str = "intent") -> list[str]:
                 probs.append(f"`{k}` has an entry over {spec['max']} "
                              f"chars")
     unknown = [k for k in decl if k not in sch]
+    if "wrapup" in unknown:
+        # Teaching refusal, not a generic unknown (user ruling
+        # 2026-08-26): declared wrapups used to be legal and one
+        # blocked shutdown — the field is retired, ·收 is the
+        # engine's fixed final-cleanup contract.
+        unknown.remove("wrapup")
+        probs.append("`wrapup` is engine-owned now: ·收 delivers the "
+                     "fixed final-cleanup contract and the session "
+                     "shuts down on the grace clock right after — "
+                     "delete the field; closing domain work belongs "
+                     "in a member step the user presses, opening "
+                     "setup in prep")
     if unknown:
         probs.append("unknown fields (not on the schema sheet, the "
                      "engine won't recognize them): "

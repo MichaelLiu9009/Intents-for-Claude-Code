@@ -88,6 +88,18 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     st.proto_approve("画画")
     st.close()
 
+    # ---- 0b. schema gate: a declared wrapup is refused with the
+    # teaching reason (field retired 2026-08-26 — engine-owned) ----
+    from commander.kernel import wspace as _wsp
+    probs = _wsp.validate({"name": "画画", "scenario": "画画",
+                           "subtype": "interactive",
+                           "wrapup": "自定义收场"}, "protocol")
+    check("0b declared wrapup refused at the schema gate with the "
+          "teaching reason, not a generic unknown-field",
+          any("engine-owned" in p for p in probs)
+          and not any("unknown fields" in p and "wrapup" in p
+                      for p in probs))
+
     eng = Engine(ws_root, http_port=9768, ws_port=9769, spawn_host=False)
     threading.Thread(target=eng.run, daemon=True).start()
     time.sleep(1.5)
@@ -100,9 +112,13 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     eng._tokens["ptk"] = defaults.XPROTO_PREFIX + "练琴"
 
     r = eng._proto_shutdown("练琴")
-    check("1a Shutdown posts ·收 step first (wrapup declared in book)",
+    check("1a Shutdown posts ·收 step first — the engine-owned "
+          "final-cleanup contract, the declared wrapup never rides "
+          "(user ruling 2026-08-26: a declared one blocked shutdown)",
           r.get("note") == "wrap-up first" and len(inst._steps) == 1
-          and "·收" in inst._steps[0] and "流水结算落盘" in inst._steps[0])
+          and "·收" in inst._steps[0]
+          and "FINAL cleanup" in inst._steps[0]
+          and "流水结算落盘" not in inst._steps[0])
     check("1b Step bar flips to ·收 running",
           inst.step_name == "·收" and inst.step_state == "running")
     check("1c Mid-ritual: bracket not booked yet (still open)",
@@ -125,9 +141,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     inst2 = LiveInst("画画")
     eng._xhosts["画画"] = inst2
     r = eng._proto_shutdown("画画")
-    check("2a No wrapup declared: falls back to default copy",
+    check("2a Nothing declared: the same fixed contract delivers "
+          "(one wrapup for every booklet)",
           r.get("note") == "wrap-up first"
-          and "settle whatever is in flight" in inst2._steps[0])
+          and "FINAL cleanup" in inst2._steps[0])
     r2 = eng._proto_shutdown("画画")
     check("2b Second press = force (wakes the teardown thread)",
           r2.get("note") == "forcing close")
