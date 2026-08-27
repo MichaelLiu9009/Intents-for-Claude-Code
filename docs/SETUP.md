@@ -33,7 +33,8 @@ engine once. Details under "Cold-start templates" below.)
 
 (`intentos` is the installed console command; `python -m commander`
 is the equivalent module form — the import package keeps its
-engineering-lineage name.)
+engineering-lineage name. The engine also keeps **IntentOS** as its
+internal name — you will see it on panels and Stream Deck key sets.)
 
 The workspace directory is minted on first run (instances/ toolkit/
 utility/ runtime/ state.db), and the engine opens the hub panel

@@ -7,7 +7,7 @@ document is for humans; the technical catalog (for agents and
 contributors) is `FEATURES.md`, and the field-level contract is
 `INTENT_SPEC.md`.
 
-Setup itself is in the README (Getting started). This guide assumes
+Setup itself is in [SETUP.md](SETUP.md). This guide assumes
 the engine is running and the hub window is open.
 
 ## The 30-second mental model
@@ -82,7 +82,7 @@ The two seeded examples (`intentos seed` — **timecheck** and
 **translator**) exist precisely so you can open their folders and see
 what a finished registration looks like before you make your own.
 (Seed before starting the engine; seeded while it was running, they
-show up after one engine restart — see the README.)
+show up after one engine restart — see [SETUP.md](SETUP.md).)
 
 <!-- screenshot: registration approval card (docs/img/approve-card.png) -->
 
@@ -189,7 +189,8 @@ panels are a complete trigger surface.
 One workspace directory holds everything, with a single exception:
 compiled Stream Deck plugins go where the Stream Deck app requires
 them (`%APPDATA%\Elgato\StreamDeck\Plugins\`, namespaced per
-workspace; README's uninstall section covers removing them).
+workspace; [SETUP.md](SETUP.md#uninstall)'s uninstall section covers
+removing them).
 Everything else stays in the
 workspace. The map:
 

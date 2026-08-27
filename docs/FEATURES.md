@@ -6,7 +6,10 @@
 > (symbol names / spec names / journal kinds / frame types /
 > constants). This catalog states abstractions, not line numbers:
 > line numbers rot, symbols don't. Where this document and the code
-> disagree, the code wins.
+> disagree, the code wins. Source comments cite `CASELAW <n>` and
+> `docs/M*.md` — those are the development repo's internal engineering
+> ledgers (rulings and design history) and don't ship with the
+> release; the citations are kept as provenance anchors.
 
 **One-paragraph architecture**: a single resident engine owns the truth
 layer (SQLite) and three host kinds (CLI PTY / headless / none). It
