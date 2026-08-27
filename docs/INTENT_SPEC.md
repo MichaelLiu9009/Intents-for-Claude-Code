@@ -146,15 +146,21 @@ order failed (brackets exempt).
 **Protocols** (x·\<booklet\>): the power key opens the bracket — one
 bracket = one task, and opening triggers **no** member intent. The
 opening envelope carries the ·open prep. Member keys deliver steps into
-the instance (each settles with `step_done(member=...)`); a member
+the instance (each settles with `step_done(member=..., note=...)` —
+the note is optional on member steps, for anything worth keeping); a member
 that declares `procedures` gets its preludes run by the engine first —
 materials land in the bracket's task directory and the step envelope
 ends with a `materials:` pointer (a failed prelude reports to the
 human and drops that step; the bracket stays open). Shutdown
 delivers ·wrap — the engine-owned final-cleanup step, the same fixed
-contract for every booklet — waits for `step_done(·wrap)` or the 45 s grace,
+contract for every booklet — waits for `step_done(·wrap, note=...)` or the 45 s grace,
 then settles the task and closes the seat gracefully (ESC + /exit,
 tree-kill fallback); pressing Shutdown during the ceremony forces it.
+The ·wrap note is **required** (a bare claim is refused): 1–2 lines —
+what settled this session plus any failure with its cause — appended
+to the bracket's record (`… — wrap: <note>`), which is what the
+consolidate ring later reads as evidence. A forced close (second
+press / engine cascade) settles without a note.
 The instance home (workspace, memory, permission sediment) persists
 across sessions.
 

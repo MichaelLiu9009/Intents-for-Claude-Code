@@ -91,6 +91,10 @@ class ProtoInstance:
         # the wrap-up ceremony — step_done(member="·wrap") sets it,
         # and the teardown thread waits on it or the grace clock
         self.wrap_evt = threading.Event()
+        # The ·wrap claim's written account (user ruling 2026-08-27:
+        # required — it rides into the bracket's record at close, the
+        # consolidate ring's only evidence)
+        self.wrap_note = None
 
         def _out(data, _cb=on_output):
             self.last_output = time.monotonic()
@@ -510,6 +514,7 @@ class Engine:
         inst0 = self._xhosts.get(pname)
         if isinstance(inst0, ProtoInstance):
             inst0.wrap_evt.clear()
+            inst0.wrap_note = None      # a stale account must not ride into this bracket's record
         self._xhost(pname)              # lazy start (household home persists, process spawns lazily)
         self._open_flow_window(pname)
         self._task_bcast()
@@ -527,8 +532,16 @@ class Engine:
         self.store.task_update(br["id"], status="done")
         self.journal.row("protocol", "end", intent=pname,
                         task=br["id"], by=by)
-        self._settle(br, "ok", outcome_text="protocol closed (human)")
+        # The ·wrap claim's note rides into the record (user ruling
+        # 2026-08-27): the fixed "protocol closed (human)" alone left
+        # the consolidate ring with no evidence to fold in. Force
+        # paths (no claim) keep the bare text.
         inst = self._xhosts.get(pname)
+        wnote = (getattr(inst, "wrap_note", None)
+                 if isinstance(inst, ProtoInstance) else None)
+        self._settle(br, "ok",
+                     outcome_text="protocol closed (human)"
+                     + (f" — wrap: {wnote}" if wnote else ""))
         if isinstance(inst, ProtoInstance):
             with inst._lock:
                 inst._steps.clear()     # bracket is dead, any dangling step is buried with it
@@ -852,10 +865,13 @@ class Engine:
             # shutdown).
             wtxt = defaults.PROTO_WRAP_FINAL
             inst0.wrap_evt.clear()
+            inst0.wrap_note = None
             inst0.enqueue_step(
                 f"[task {br['id']}] step ·wrap | {wtxt} — when done, call "
-                f"step_done(member=\"·wrap\"); the seat closes right "
-                f"after (grace "
+                f"step_done(member=\"·wrap\", note=\"...\") — note "
+                f"REQUIRED, 1-2 lines: what settled this session plus "
+                f"any failure with its cause (it becomes the bracket's "
+                f"record); the seat closes right after (grace "
                 f"{int(defaults.PROTO_WRAP_GRACE_S)}s).", member="·wrap")
             self.journal.row("protocol", "wrapup", intent=pname,
                             task=br["id"])
@@ -2769,7 +2785,12 @@ class Engine:
                 else instance_home(self.workspace, self.module))
         u = prune_report.window_usage(win, home)
         name = t.get("intent") or t.get("spec") or "?"
-        dur = win.get("duration_s") or 0.0
+        # Live-fire 2026-08-26: every receipt journaled dur 0.0 — the
+        # receipt fires inside _settle BEFORE store.record writes
+        # duration_s, so the window's promoted field is always empty
+        # at this instant. Compute live from the same source the
+        # record itself uses.
+        dur = self._exec_dur(t["id"]) or win.get("duration_s") or 0.0
         self.journal.row("task", "receipt", task=t["id"],
                         intent=t.get("intent"),
                         dur=dur, calls=(u or {}).get("calls"),
@@ -4038,15 +4059,31 @@ class Engine:
             if not isinstance(inst, ProtoInstance):
                 return {"error": f"step_done: no instance for '{pn}'"}
             mem = str(f.get("member") or "").strip() or inst.step_name
+            note = str(f.get("note") or "").strip()[:2000]
             if mem == "·wrap":
                 # Closing-ceremony acknowledgment (user ruling
-                # 2026-08-24): releases the wrap-up thread
+                # 2026-08-24): releases the wrap-up thread. The note
+                # is REQUIRED here (user ruling 2026-08-27): the
+                # ·wrap claim is the bracket's only written account —
+                # live-fire task 12 closed over a real failure and
+                # the ledger kept nothing, leaving the consolidate
+                # ring empty-handed.
+                if not note:
+                    return {"error": "step_done(·wrap) needs note= — "
+                                     "1-2 lines: what settled this "
+                                     "session, and any failure with "
+                                     "its cause. It becomes the "
+                                     "bracket's record; resend with "
+                                     "note."}
+                inst.wrap_note = note
                 inst.wrap_evt.set()
             inst.step_state = "done"
             if mem:
                 inst.step_name = mem
             self.journal.row("protocol", "step-done", intent=pn,
-                            member=mem or None)
+                            member=mem or None,
+                            task=(self._bracket_of(pn) or {}).get("id"),
+                            note=note or None)
             return {"ok": True, "member": mem}
         if verb == "task_done":
             tid = f.get("task")

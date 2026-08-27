@@ -243,7 +243,9 @@ technical reference (written for agents and contributors).
   `_engine_shutdown` (cascade + `_draining` + truth-polled teardown).
 - **Instance seats**: `ProtoInstance` — envelope queue (steps wait for
   the package to land), step ledger (`step_name/step_state`,
-  `step_done` settles), `wrap_evt` for the closing ceremony; one
+  `step_done` settles; its `note` is required on ·wrap and rides
+  into the bracket's record — the consolidate ring's evidence),
+  `wrap_evt`/`wrap_note` for the closing ceremony; one
   bracket per booklet, brackets in parallel across booklets.
 - **Container / hot set**: in-memory LRU of recently used intents,
   cap `CONTAINER_CAP`, cleared on session turnover. Anchors: `_hot`

@@ -13,6 +13,7 @@ cannot occupy a reserved slot.
 
 Run: PYTHONIOENCODING=utf-8 python tests/test_wrapup.py
 """
+import json
 import sys
 import tempfile
 import threading
@@ -107,6 +108,9 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     # ---- 1 . close-out ritual: ·wrap goes first, booking + closing the
     #        seat only happens after step_done releases it -----------
     br = eng.store.chain_start("protocol:练琴", issuer="user", intent="练琴")
+    # stamp delivery 5s in the past so the receipt has a real window
+    eng.store.task_update(br["id"], delivered_at=time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(time.time() - 5)))
     inst = LiveInst("练琴")
     eng._xhosts["练琴"] = inst
     eng._tokens["ptk"] = defaults.XPROTO_PREFIX + "练琴"
@@ -124,16 +128,43 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     check("1c Mid-ritual: bracket not booked yet (still open)",
           eng._bracket_of("练琴") is not None and "练琴" in eng._wrapping)
     check("1d Seat not killed", inst.stopped == [])
+    ans0 = eng._mcp_call({"verb": "step_done", "member": "·wrap",
+                          "token": "ptk"})
+    check("1e bare step_done(·wrap) refused — the close step must "
+          "carry its written account (user ruling 2026-08-27: task 12 "
+          "closed over a real failure, the ledger kept nothing)",
+          "note" in str(ans0.get("error") or "")
+          and not inst.wrap_evt.is_set())
     ans = eng._mcp_call({"verb": "step_done", "member": "·wrap",
+                         "note": "流水已落盘;摊谱 init 失败:archive "
+                                 "路径乱码 (BOM)",
                          "token": "ptk"})
-    check("1e step_done(·wrap) accepted (exec-face verb)",
-          ans.get("ok") is True
-          or "member" in str(ans))
+    check("1e2 step_done(·wrap, note=...) accepted",
+          ans.get("ok") is True)
     done = wait_for(lambda: (eng.store.task(br["id"]) or {})
                     .get("status") == "done" and inst.stopped)
     check("1f After ack: books + closes seat gracefully",
           done is not None
           and inst.stopped == [True] and "练琴" not in eng._wrapping)
+    rec1 = eng.store.record_for(br["id"]) or {}
+    check("1g wrap note rides into the record outcome — the "
+          "consolidate ring's evidence chain (user ruling 2026-08-27)",
+          "archive 路径乱码" in str(rec1.get("outcome") or ""))
+    _ev = eng.store.events_between(
+        "2000-01-01 00:00:00", "2999-01-01 00:00:00",
+        kinds=["task"], names=["receipt"], task_id=br["id"])
+    _dur = (json.loads(_ev[-1]["fields"]).get("dur")
+            if _ev and _ev[-1].get("fields") else None)
+    check("1h receipt journals a live duration, not 0.0 (live-fire "
+          "2026-08-26: receipt fires before the record row lands)",
+          isinstance(_dur, (int, float)) and _dur >= 4.0)
+    _sd = eng.store.events_between(
+        "2000-01-01 00:00:00", "2999-01-01 00:00:00",
+        kinds=["protocol"], names=["step-done"], task_id=br["id"])
+    check("1i step-done journal row pinned to the bracket task and "
+          "carries the note",
+          len(_sd) >= 1
+          and "路径乱码" in str(_sd[-1].get("fields") or ""))
 
     # ---- 2 . second press forces it: pressing Shutdown again while
     #        the ritual is in flight = finishes immediately ----------
@@ -152,6 +183,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                     .get("status") == "done" and inst2.stopped)
     check("2c After force: books + closes seat", done is not None
           and inst2.stopped == [True])
+    rec2 = eng.store.record_for(br2["id"]) or {}
+    check("2d force close (no claim) keeps the bare record — no "
+          "stale note fabricated",
+          str(rec2.get("outcome") or "") == "protocol closed (human)")
 
     # ---- 3 . force=True (engine shutdown cascades into this):
     #        skips the ritual and lands directly ----------------------

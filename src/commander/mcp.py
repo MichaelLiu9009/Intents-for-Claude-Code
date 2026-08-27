@@ -235,10 +235,16 @@ TOOLS = [
                     "and closes nothing (the bracket stays one task; "
                     "task_done is still refused there). A step is a "
                     "critical section: until you claim it, new member "
-                    "keys are refused engine-side — claim promptly.",
+                    "keys are refused engine-side — claim promptly. "
+                    "note (1-2 lines of outcome): REQUIRED on ·wrap — "
+                    "what settled this session plus any failure with "
+                    "its cause, it becomes the bracket's record; "
+                    "welcome on member steps when something is worth "
+                    "keeping.",
      "inputSchema": {"type": "object",
                      "properties": {
-                         "member": {"type": "string"}},
+                         "member": {"type": "string"},
+                         "note": {"type": "string"}},
                      "required": []}},
     {"name": "intent_memory_index",
      "description": "Call at start of work: your intent surface — the "
@@ -448,7 +454,8 @@ def _dispatch(workspace: Path, name: str, args: dict) -> str:
     if name == "step_done":
         return _call_engine(workspace, {
             "verb": "step_done",
-            "member": str(args.get("member") or "")})
+            "member": str(args.get("member") or ""),
+            "note": str(args.get("note") or "")})
     if name == "intent_memory_index":
         return _call_engine(workspace, {"verb": "intent_memory_index"})
     if name == "intent_search":

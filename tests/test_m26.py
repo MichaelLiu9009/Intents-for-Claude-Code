@@ -369,7 +369,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           and "练题" in eng._xhosts
           and wait_for(lambda: any("·wrap" in s
                                    for s in qinst.host.sent)) is not None)
-    post({"verb": "step_done", "member": "·wrap", "token": "ptk26"})
+    # note is required on ·wrap (user ruling 2026-08-27; the refusal
+    # pin lives in test_wrapup 1e)
+    post({"verb": "step_done", "member": "·wrap",
+          "note": "本场收尾完毕,无遗留", "token": "ptk26"})
     check("5b2 step_done(·wrap) clears it: closes bracket + stops seat "
           "(ownership retained), other books unaffected",
           wait_for(lambda: eng._bracket_of("练题") is None
