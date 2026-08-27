@@ -302,6 +302,30 @@ technical reference (written for agents and contributors).
   re-render. Deny floor stays engine-minted and is never widened.
   Anchors: `_perm_ask` `_perm_answer` `_grant_rules` `_perm_grants`
   `perm_gate`.
+- **Three layers, three owners** — the division of authority behind
+  that consolidation:
+
+  | layer | owner | nature |
+  |---|---|---|
+  | tool surface / instance topology | Intents (compiler) | compile-time, structural |
+  | contextual allow decisions | Claude Code auto mode | runtime, dynamic |
+  | never-allow floor + `PERM_ALLOW` exceptions | Intents engine | static; never widened by an agent |
+
+  The project first ran the boundary leg as its own explicit loop:
+  per-instance tool-use/approval recording → approval accretion → a
+  pruner seat proposing consolidations → human-approved compilation
+  into that instance's config → re-rendered at engine boot. When the
+  harness shipped native auto mode, the dynamic allow policy was
+  **delegated down** rather than duplicated — safe because
+  per-booklet instances already fix the session context, so the
+  harness's contextual inference is automatically confined to one
+  booklet's world. What stays up here is what the harness cannot
+  own: scope topology, per-face tool surface, the deny floor,
+  lifecycle governance. Trade-off, stated plainly: the explicit loop
+  was auditable and reproducible; auto mode judges better in context
+  but is a moving target that ships with the harness.
+  `boundary_compiled` (store DDL) and `kernel/boundary.py` (§7) are
+  the retired loop's fossils, kept per the additive law.
 - **Telemetry bus**: PreToolUse mailbox → per-seat attribution to the
   active order; receipts and token alerts follow the order. Anchors:
   `_bus_event` `_task_receipt` `TASK_TOKEN_ALERT`;

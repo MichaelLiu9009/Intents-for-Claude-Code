@@ -85,6 +85,26 @@ substrate, my desktop. In someone else's sandbox, boundary design
 is architectural taste. In your own home, it is a survival
 condition.
 
+One episode from the build taught me where the irreplaceable part
+actually sits. Early on I built the boundary leg as its own machine:
+every tool call and approval recorded per instance, repeated grants
+accreting into proposals, a pruning pass suggesting consolidations,
+a human ruling on each, and the result compiled into that
+instance's configuration, re-rendered at every engine boot — a full
+capability-learning loop, running at my desk. Then the harness
+itself shipped contextual permission inference, and it was better
+at the in-context judgment than my classifier would ever be. So I
+retired my loop and delegated the dynamic decisions down — which
+was only safe because each booklet already runs as its own
+instance: the harness's "judge from session context" arrives
+pre-confined to one declared world. What proved irreplaceable was
+never the classifier. It was deciding what instance, what context,
+what tool surface the classifier operates inside — and the one
+floor no inference may cross. Control from the outside does not
+mean rewriting the platform's judgment; it means owning the shape
+the judgment happens in. I traded some policy observability for
+less friction, knowingly, and kept the layers that were mine.
+
 I make no prediction about models. I make one about interfaces:
 agent systems will trend toward governing declared shapes from
 outside, because every platform that put humans in an approval loop
