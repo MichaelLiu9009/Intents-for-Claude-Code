@@ -1,6 +1,6 @@
 [project]
 name = "intents-for-claude-code"
-version = "0.1.0"
+version = "1.0.0"
 description = "Intents for Claude Code — compile your habits into push-button intents, procedures and protocols on top of the Claude Code harness (engine's internal name: IntentOS)"
 requires-python = ">=3.12"
 dependencies = [

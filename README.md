@@ -67,7 +67,7 @@ Open the bracket, run member steps from keys; it remembers, across sessions.</em
 
 ## Install
 
-**v0.1.0 (M26 baseline)** — Windows · Python ≥ 3.12 ·
+**v1.0.0** — Windows · Python ≥ 3.12 ·
 [Claude Code CLI](https://claude.com/claude-code) logged in. Then:
 
 ```
