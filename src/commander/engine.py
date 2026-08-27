@@ -568,6 +568,31 @@ class Engine:
                             reason="bracket-closed", member=member)
             return {"error": "bracket closed"}
         seat = defaults.XPROTO_PREFIX + pname
+        # Step serialization (user ruling 2026-08-26): a member step
+        # is a bracket-scoped critical section — until the previous
+        # envelope is claimed (step_done) the next member key is
+        # refused, not queued. The sharp case is an ask mid-step:
+        # the seat's turn ends while the card waits on the human,
+        # and an unguarded new step would jump the line and
+        # interleave with the unfinished one. "idle" (quiet
+        # timeout) deliberately passes — the escape hatch when a
+        # step hangs without settling.
+        inst0 = self._xhosts.get(pname)
+        with self._card_lock:
+            asking = any(cd.get("instance") == seat
+                         and cd.get("kind") == "ask"
+                         for cd in self._cards.values())
+        if isinstance(inst0, ProtoInstance) and (
+                inst0.step_state == "running" or asking):
+            busy = inst0.step_name or "the current step"
+            self._say_engine(
+                f"Protocol '{pname}': step '{busy}' is still open"
+                + (" (a card is waiting on you)" if asking else "")
+                + f" — settle it first, then press '{member}'.",
+                instance=seat)
+            self.journal.row("protocol", "refused", intent=pname,
+                            reason="step-open", member=member)
+            return {"error": "previous step still open"}
         self._touch(member, defaults.SCORE_TRIGGER)
         self.journal.row("protocol", "step", intent=pname,
                         task=br["id"], member=member, by=by,

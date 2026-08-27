@@ -206,7 +206,11 @@ TOOLS = [
                     "the user typed a free-form answer instead of "
                     "picking (the card has a typed-answer line, so an "
                     "off-list reply is always reachable; never invent a "
-                    "'manual input' pseudo-option). Executor orders: ask "
+                    "'manual input' pseudo-option). **Single-select by "
+                    "construction**: exactly one choice comes back, "
+                    "there is no multi-select — for pick-several, ask "
+                    "one item at a time, or say combinations are "
+                    "welcome on the typed line. Executor orders: ask "
                     "ONLY at forks where E explicitly says ask_user — "
                     "not written means not asked; if a default works, "
                     "don't ask. On timeout take the default or fail "
@@ -223,7 +227,9 @@ TOOLS = [
                     "member intent's name). Ledger-only — it flips the "
                     "seat's step state for the Status/Step bars, opens "
                     "and closes nothing (the bracket stays one task; "
-                    "task_done is still refused there).",
+                    "task_done is still refused there). A step is a "
+                    "critical section: until you claim it, new member "
+                    "keys are refused engine-side — claim promptly.",
      "inputSchema": {"type": "object",
                      "properties": {
                          "member": {"type": "string"}},
@@ -317,6 +323,9 @@ PROTO_DESC = {"ask_user": (
     "routed to the card flow, blocks for the answer, returns "
     "{choice} — {typed: true} when the user typed a free-form answer "
     "instead of picking; never invent a 'manual input' pseudo-option). "
+    "**Single-select by construction**: exactly one choice comes back, "
+    "there is no multi-select — for pick-several, ask one item at a "
+    "time, or say combinations are welcome on the typed line. "
     "Bracket hosting: ask only at real forks the user must decide, and "
     "open a card when the OPTIONS deserve to be seen as a list — "
     "judgments and reports go straight to chat. Prefer defaults. On "

@@ -219,14 +219,28 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           "gets the original words)",
           "奇迹的山" in (env or ""))
 
+    # ---- 2a2. step serialization (user ruling 2026-08-26): the
+    # previous envelope is a critical section — until it is claimed
+    # (step_done), a new member key is refused, not queued ----
+    n1b = len(qinst.host.sent)
+    r = eng._proto_member("练琴", "陪聊", "插队试探")
+    check("1f0 member key while the previous step is unclaimed → "
+          "refused, zero envelope",
+          "still open" in str(r.get("error") or "")
+          and not any("intent 陪聊" in x
+                      for x in qinst.host.sent[n1b:]))
+    qinst.step_state = "done"          # the claim (step_done's effect)
+
     # second member, same law
     n2 = len(qinst.host.sent)
     eng._on_intent("陪聊", "聊聊手感")
     plain = wait_for(lambda: any(
         "intent 陪聊" in x and "step" in x
         for x in qinst.host.sent[n2:]))
-    check("1f second member, same law (envelope, no new ticket)",
+    check("1f second member, same law (envelope, no new ticket; "
+          "claimed step unlocks the next key)",
           bool(plain))
+    qinst.step_state = "done"          # claim 陪聊 for the sections below
 
     # ---- 2b. aggregate warm-up (user's idea 2026-08-16, landed
     # 08-17): the open-book package renders member declarations along
