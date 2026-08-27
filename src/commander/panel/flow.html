@@ -675,7 +675,13 @@ click or Esc to unpin"></span>
             + " · " + word;
         }
       } else if (r && r.open) {
-        word = txt(r.step ? (r.step_state || r.status) : r.status);
+        // Parity with the deck dial (audit 2026-08-26): "await"
+        // (a card waiting on a human) and "down" always win over a
+        // stale step_state — the dial has this override, the panel
+        // lacked it and masked exactly the states needing a human.
+        word = (r.status === "await" || r.status === "down")
+          ? txt(r.status)
+          : txt(r.step ? (r.step_state || r.status) : r.status);
         label = (r.step ? txt(r.step) + " · " : "") + word;
       }
       stepEl.textContent = label;

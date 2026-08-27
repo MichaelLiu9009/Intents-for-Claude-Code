@@ -1,7 +1,7 @@
 # Intents for Claude Code · component catalog
 
-> Baseline: M26 (0.1.0; engine-internal name IntentOS). ~9k lines of
-> src. **Usage**: every component is listed as responsibility /
+> Baseline: M26 (1.0.0; engine-internal name IntentOS). ~13.5k lines
+> of Python src (plus ~1.4k first-party js/html). **Usage**: every component is listed as responsibility /
 > behavior / implementation / anchors — the anchors are grep targets
 > (symbol names / spec names / journal kinds / frame types /
 > constants). This catalog states abstractions, not line numbers:
@@ -48,7 +48,7 @@ technical reference (written for agents and contributors).
   `PROTO_EXIT_GRACE_S` · `E_VERBS/E_GRAMMAR/E_COND_MAX` ·
   `PRIORITY_EXEC/ALERT/ERROR/INTERNAL` · `ST_COLORS` (status palette)
   · templates: `HOME_CLAUDE_MD` `XSOLO_CLAUDE_MD` `XSOLO_PACKAGE_MD`
-  `XSOLO_SURGERY_MD` `PROTOCOL_PACKAGE_MD` (·启 prep slot)
+  `XSOLO_SURGERY_MD` `PROTOCOL_PACKAGE_MD` (·open prep slot)
   `PROTO_HOST_CLAUDE_MD` `RETRY_FULFILL_MD`
   `DEBUG_MD` `WS_GUIDE_MD` `WS_REGISTER_MD` ·
   skills: `SKILL_TASK_DELIVERY_MD` `SKILL_INTENT_CREATION_MD`.
@@ -237,7 +237,7 @@ technical reference (written for agents and contributors).
   shutdown|status` / `member=` / `engine=start|shutdown|status|task|
   approve|cancel`) and panel IME verbs. Anchors: `_on_trigger`
   `_on_intent` `_proto_start` `_proto_member` `_proto_close`
-  `_proto_shutdown` (·收 ceremony, `_wrapping`, force on second
+  `_proto_shutdown` (·wrap ceremony, `_wrapping`, force on second
   press) `_proto_interrupt` `_proto_approve` `_seat_approve`
   (newest card first, leftover count announced) `_solo_cancel`
   `_engine_shutdown` (cascade + `_draining` + truth-polled teardown).
@@ -255,8 +255,10 @@ technical reference (written for agents and contributors).
 - **Creation & registration**: two-phase (§2u): `_intent_submit`
   (ticket + workspace mint, no gate) → `_workspace_submit`
   (register = compile: schema validation, name checks, hash freeze,
-  registration card; protocol branch parses members + prep/wrapup,
-  rejects reserved member names); effects `provision_workspace` /
+  registration card; protocol branch parses members + prep — a
+  declared `wrapup` is refused since 2026-08-26 (closing is the
+  engine-owned final-cleanup contract) — and rejects reserved
+  member names); effects `provision_workspace` /
   `retire_intent`. Field truth: `kernel/wspace.py` `SCHEMA` /
   `PROTO_SCHEMA` (`schema.md` textbook shipped into every workspace
   by `write_schema_md`).
@@ -264,9 +266,9 @@ technical reference (written for agents and contributors).
   rings engine-run, deliver rings rendered into
   `runtime/tasks/<id>/`; settle routes edges and stamps effects.
   Anchors: `_deliver` `_settle` `_admit` `_admit_spec`
-  `TASK_TIMEOUT_S` `MAX_NODE_VISITS`; boot-seeded specs `qual·初生`
-  `qual·注册 (FLOW_WS_QUAL)` `qual·回炉` `qual·退役 (FLOW_RETIRE)`
-  `qual·protocol` `validate` `手术` (surgery) `retry`
+  `TASK_TIMEOUT_S` `MAX_NODE_VISITS`; boot-seeded specs `qual·new`
+  `qual·register (FLOW_WS_QUAL)` `qual·rework` `qual·retire (FLOW_RETIRE)`
+  `qual·protocol` `validate` `surgery` (surgery) `retry`
   (deliver template retry-fulfill) and `consolidate`
   (deliver template consolidate).
 - **Surgery loop** (failed solo orders): proposal card (human gate) →
@@ -286,7 +288,7 @@ technical reference (written for agents and contributors).
   in the journal); gate cards are exempt from reaping; ask cards
   accept typed lines. Anchors: `_card_open` `_card_close`
   `_on_card_answer` `_gates` `_gate_wait`; kinds `gate/perm/stall/
-  info/ask/notify/approval`; `IDLE_STALL_S` `CARD_CLOSE_DEBOUNCE_S`.
+  info/ask/notify/approval`; `IDLE_STALL_S`.
 - **Permission plane** (consolidated 2026-08-24): seats spawn in the
   harness's own mode (`--permission-mode`, `SEAT_PERMISSION_MODE`);
   what auto mode doesn't cover raises a card — PTY asks via the

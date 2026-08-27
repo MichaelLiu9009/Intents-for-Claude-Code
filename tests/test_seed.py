@@ -97,6 +97,15 @@ class FakeProtoHost:
     def enqueue_step(self, line, member=None):
         self.steps.append((member, line))
 
+    def step_open(self, member):
+        # critical section opens at key-press time (audit 2026-08-26)
+        self.step_name = member
+        self.step_state = "running"
+
+    def step_release(self, member):
+        if getattr(self, "step_name", None) == member:
+            self.step_state = "done"
+
     def flush(self):
         pass
 

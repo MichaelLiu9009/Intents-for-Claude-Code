@@ -18,17 +18,17 @@ import threading
 import time
 from pathlib import Path
 
-SCHEMA_VERSION = 19
+SCHEMA_VERSION = 20
 
-# Flow names (M12: chains renamed to flow, typed node graph). qual·初生
-# = intent-creation QA (human-approval gate); qual·回炉 = rework QA for
+# Flow names (M12: chains renamed to flow, typed node graph). qual·new
+# = intent-creation QA (human-approval gate); qual·rework = rework QA for
 # firing-failed (n0 diagnosis -> n1 sim) -- edge-entry only (on_fail of
 # deliver:X), chains don't open chains.
-FLOW_QUAL_NEW = "qual·初生"
-FLOW_QUAL_REWORK = "qual·回炉"
-FLOW_WS_QUAL = "qual·注册"   # §2u: the sole human gate for folder-based
+FLOW_QUAL_NEW = "qual·new"
+FLOW_QUAL_REWORK = "qual·rework"
+FLOW_WS_QUAL = "qual·register"   # §2u: the sole human gate for folder-based
                              # submission (registration = compilation)
-FLOW_RETIRE = "qual·退役"    # live-fire precedent 2026-08-23: retirement
+FLOW_RETIRE = "qual·retire"    # live-fire precedent 2026-08-23: retirement
                              # is a human ruling -- agent proposes, human
                              # approval takes effect (previously no verb
                              # existed, only engine-halting manual surgery)
@@ -351,7 +351,7 @@ _DDL_V18 = """
 ALTER TABLE intents ADD COLUMN procedures TEXT NOT NULL DEFAULT '[]';
 """
 
-# v19 (user ruling 2026-08-24: ·启/·收 made real -- open/close are two
+# v19 (user ruling 2026-08-24: ·open/·wrap made real -- open/close are two
 # system-native steps, the engine auto-delivers them when opening/
 # closing a roster; the roster declares their content): prep = the
 # opening/setup step, wrapup = the closing step (E prose, each
@@ -361,11 +361,32 @@ ALTER TABLE protocols ADD COLUMN prep TEXT NOT NULL DEFAULT '';
 ALTER TABLE protocols ADD COLUMN wrapup TEXT NOT NULL DEFAULT '';
 """
 
+# v20 (release Latinization, user ruling 2026-08-26): the CJK runtime
+# identifiers became Latin before the public flip (qual·初生/回炉/注册/
+# 退役 -> qual·new/rework/register/retire, 手术 -> surgery, class
+# default 未分类 -> unfiled). Live rows are renamed; the journal is
+# read-only history and keeps old names (M12 precedent); stale
+# chain_specs rows under old names are deleted -- boot reseeds the
+# new ones. Frozen earlier migrations still say 未分类; the column
+# DEFAULT is never relied on (every insert passes cls explicitly).
+_DDL_V20 = """
+UPDATE tasks SET spec='qual·new' WHERE spec='qual·初生';
+UPDATE tasks SET spec='qual·rework' WHERE spec='qual·回炉';
+UPDATE tasks SET spec='qual·register' WHERE spec='qual·注册';
+UPDATE tasks SET spec='qual·retire' WHERE spec='qual·退役';
+UPDATE tasks SET spec='surgery' WHERE spec='手术';
+DELETE FROM chain_spec_steps WHERE spec IN
+  ('qual·初生','qual·回炉','qual·注册','qual·退役','手术');
+DELETE FROM chain_specs WHERE name IN
+  ('qual·初生','qual·回炉','qual·注册','qual·退役','手术');
+UPDATE intents SET class='unfiled' WHERE class='未分类';
+"""
+
 _MIGRATIONS = {2: _DDL_V2, 3: _DDL_V3, 4: _DDL_V4, 5: _DDL_V5,
                6: _DDL_V6, 7: _DDL_V7, 8: _DDL_V8, 9: _DDL_V9,
                10: _DDL_V10, 11: _DDL_V11, 12: _DDL_V12, 13: _DDL_V13,
                14: _DDL_V14, 15: _DDL_V15, 16: _DDL_V16, 17: _DDL_V17,
-               18: _DDL_V18, 19: _DDL_V19}
+               18: _DDL_V18, 19: _DDL_V19, 20: _DDL_V20}
 
 
 INTENT_STATUSES = ("draft", "provisioned", "retired")
@@ -442,7 +463,22 @@ class Store:
                     # whole V2..V19 chain on its first boot, so this
                     # is the common path, not an upgrade corner.
                     for ver in range(v + 1, SCHEMA_VERSION + 1):
-                        self._db.executescript(_MIGRATIONS[ver])
+                        if ver == 20:
+                            # v20 renames are cosmetic UPDATEs over
+                            # columns some pre-discipline dbs lack
+                            # (audit 2026-08-26: the 2026-08-11
+                            # fixture has no tasks.spec) — each
+                            # statement is independent, best-effort;
+                            # a rename must never brick a boot.
+                            for stmt in _DDL_V20.split(";"):
+                                if stmt.strip():
+                                    try:
+                                        self._db.execute(stmt)
+                                    except sqlite3.OperationalError:
+                                        pass
+                            self._db.commit()
+                        else:
+                            self._db.executescript(_MIGRATIONS[ver])
                         self._db.execute(f"PRAGMA user_version={ver}")
                 elif v > SCHEMA_VERSION:
                     raise RuntimeError(
@@ -482,13 +518,28 @@ class Store:
         except Exception:
             pass
 
+    def case_clash(self, name: str) -> str | None:
+        """A different-cased twin of this name on either shelf (audit
+        2026-08-26): NTFS folds case, so two case-variant assets
+        collide onto ONE workspace directory and the later submit
+        silently overwrites the earlier asset's intent.json. ASCII
+        lower() is enough — case is an ASCII phenomenon here; CJK
+        names have no case to collide on."""
+        for tbl in ("intents", "protocols"):
+            r = self._db.execute(
+                f"SELECT name FROM {tbl} WHERE lower(name)=lower(?) "
+                f"AND name != ?", (name, name)).fetchone()
+            if r:
+                return r["name"]
+        return None
+
     # ---- intents ---------------------------------------------------------
 
     def intent_create(self, name: str, *, title: str = "", scenario: str = "",
                       steps: str = "", instructions: str = "",
                       fires: int = 1,
                       owner: str = "sidecar",
-                      cls: str = "未分类", scope: str | None = None,
+                      cls: str = "unfiled", scope: str | None = None,
                       born: str | None = None,
                       step_refs: list[str] | None = None,
                       tools: list[tuple[str, str]] | None = None,
@@ -510,7 +561,7 @@ class Store:
                 "VALUES(?,?,?,?,?,?,?,'draft',1,?,?,?,?,?,?,?)",
                 (name, title, scenario, steps, instructions,
                  int(fires), owner,
-                 cls or "未分类", scope or owner, born,
+                 cls or "unfiled", scope or owner, born,
                  json.dumps(params or [], ensure_ascii=False),
                  _now(), _now(), _now()))
             self._put_children(name, step_refs, tools)
@@ -1004,7 +1055,7 @@ class Store:
         went with it: (1) `effect: fail:suspend_intent` lost its
         anchor -- a physical-layer blowup shouldn't suspend the intent
         (a broken keyboard doesn't mean the document is corrupt);
-        (2) rework's redirect to `qual·回炉` retires for the same
+        (2) rework's redirect to `qual·rework` retires for the same
         reason -- sidecar never wrote that code and can't fix it,
         rework would spin idle; (3) the fires dual-form pairing is
         voided along with it (fires=0 was defined as "chain bound to a
@@ -1281,7 +1332,7 @@ class Store:
     # surfaces were retired (boundary 2026-08-24, class 2026-08-25),
     # both columns are fossils (additive law)
     def proto_stage(self, name: str, *, subtype: str, boundary: str = "",
-                    cls: str = "未分类", scenario: str, staged_hash: str,
+                    cls: str = "unfiled", scenario: str, staged_hash: str,
                     model: str = "sonnet",
                     prep: str = "", wrapup: str = "",
                     born: str | None = None) -> None:
@@ -1380,7 +1431,7 @@ class Store:
         return p
 
     def proto_compile_unit(self, name: str, member_decls: list[dict], *,
-                           owner: str, cls: str = "未分类",
+                           owner: str, cls: str = "unfiled",
                            born: str | None = None) -> dict | None:
         """v17 atomic whole-roster compilation (user ruling 2026-08-16
         late night: "take it all, no singletons"). Done in **one
@@ -1425,7 +1476,7 @@ class Store:
                         "last_touched,created_at,updated_at) "
                         "VALUES(?,?,?,?,?,?,?,1,?,'provisioned',1,?,?,?,?,"
                         "'[]',?,?,?,?)",
-                        (m, *vals, prcs, owner, cls or "未分类", owner,
+                        (m, *vals, prcs, owner, cls or "unfiled", owner,
                          name,
                          f"protocol:{name}", born, _now(), _now(), _now()))
                 else:
@@ -1473,7 +1524,12 @@ class Store:
         live_p = {p["name"] for p in self.protos(status="provisioned")}
         for r in self._db.execute(
                 "SELECT name, proto FROM intents "
-                "WHERE proto IS NOT NULL AND proto != ''"):
+                "WHERE proto IS NOT NULL AND proto != '' "
+                "AND status != 'retired'"):
+            # Retired members keep their proto stamp (soft-retirement
+            # law: history stays) — a booklet retired whole would
+            # otherwise flag every one of its members as sick on
+            # every boot, forever (audit 2026-08-26).
             if r["proto"] not in live_p:
                 problems.append(f"member '{r['name']}''s booklet "
                                 f"'{r['proto']}' is not on the shelf — "

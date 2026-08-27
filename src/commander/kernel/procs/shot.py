@@ -1,4 +1,4 @@
-"""截屏 (engine built-in procedure) —— shoots the monitor the mouse
+"""screenshot (engine built-in procedure) —— shoots the monitor the mouse
 is on, attaches it into the task materials. procshim contract:
 def run(ctx), materials leave only through ctx.attach/say, raise =
 the whole step is voided (engine reports to the human, the order
@@ -63,7 +63,7 @@ $bmp.Save('{out}', [System.Drawing.Imaging.ImageFormat]::Png)
 
 def run(ctx):
     if sys.platform != "win32":
-        raise RuntimeError("截屏 procedure needs win32")
+        raise RuntimeError("screenshot procedure needs win32")
     x, y, w, h = _monitor_under_mouse()
     out = ctx.stage / "shot.png"
     ps = _PS.format(x=x, y=y, w=w, h=h,

@@ -4,7 +4,7 @@ reconciliation, entry three-way separation of powers, token travel
 
 v16 (user's call, night of 2026-08-16): the procedure node retired
 along with the physical layer; delivery chain = single deliver node;
-qual·回炉 currently has no production inbound edge (left for future
+qual·rework currently has no production inbound edge (left for future
 wiring when E-layer failures are hooked up) -- this file instead uses
 head (engine) to open the chain directly and drive the rework loop,
 with the mechanism guard kept as-is; the intent-suspended assertion
@@ -195,7 +195,7 @@ with tempfile.TemporaryDirectory() as tmp:
           and eng.store.spec("debug") is None
           and eng.store.spec("qual·procedure") is None)
 
-    # ---- ② Entry separation of powers: qual·回炉 can only be entered
+    # ---- ② Entry separation of powers: qual·rework can only be entered
     # via edge; agents cannot initiate it ------------
     try:
         eng.store.chain_start(FLOW_QUAL_REWORK, issuer="sidecar",
@@ -203,7 +203,7 @@ with tempfile.TemporaryDirectory() as tmp:
         breached = True
     except PermissionError:
         breached = False
-    check("2 M12 entry table: qual·回炉 head=engine, "
+    check("2 M12 entry table: qual·rework head=engine, "
           "sidecar-initiated rejected (chains don't open chains, "
           "humans open chains, rerouting stays inside the edge)",
           not breached)
@@ -285,7 +285,7 @@ with tempfile.TemporaryDirectory() as tmp:
           and eng.store.intent("坏蛋")["status"] == "provisioned")
     led = {x["chain"]: x for x in eng.store.chains_recent(30)}
     check("6b M12 travel ledger shows: one row per journey "
-          "(deliver:坏蛋 -> qual·回炉), final state failed",
+          "(deliver:坏蛋 -> qual·rework), final state failed",
           led[n0["chain_id"]]["spec"] == FLOW_QUAL_REWORK
           and led[n0["chain_id"]]["status"] == "failed")
 
@@ -321,7 +321,7 @@ with tempfile.TemporaryDirectory() as tmp:
     names = {(r["kind"], r["name"]) for r in rows}
     routes = [r for r in rows if (r["kind"], r["name"])
               == ("chain", "route")]
-    check("8 journal: route(edge=fail,to=qual·回炉:0) x back-jump "
+    check("8 journal: route(edge=fail,to=qual·rework:0) x back-jump "
           "count / loop-limit all logged (v16: reroute-into-edge "
           "retired, remaining back-edges are just n1->n0 rework)",
           ("chain", "loop-limit") in names

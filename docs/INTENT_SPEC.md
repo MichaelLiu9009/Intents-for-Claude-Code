@@ -1,4 +1,4 @@
-# INTENT_SPEC — the intent & protocol contract (M26 / 0.1.0)
+# INTENT_SPEC — the intent & protocol contract (M26 / 1.0.0)
 
 > This is the contract **as implemented**. Where this document and the
 > code disagree, the code and its tests win. The single source of truth
@@ -40,7 +40,7 @@ Fields (authority: `wspace.SCHEMA`):
 
 | Field | Required | Shape | Cap | Meaning |
 |---|---|---|---|---|
-| `name` | yes | word | 20 | scenario word; doubles as directory and trigger name |
+| `name` | yes | phrase | 30 | a word or a short phrase (internal spaces/hyphens ok; no dots or path separators, no Windows reserved device names); doubles as directory and trigger name |
 | `title` | no | text | 60 | one-line human title |
 | `scenario` | yes | word | 20 | **one-word** situational tag; the vector layer clusters on it (same-word pile-up = a signal this family wants to become a booklet); long descriptions hurt retrieval |
 | `steps` | yes | text | 1200 | the **E section**: a pseudo-code function body (see grammar below) |
@@ -81,12 +81,12 @@ Fields (authority: `wspace.PROTO_SCHEMA`):
 
 | Field | Required | Shape | Cap | Meaning |
 |---|---|---|---|---|
-| `name` | yes | word | 20 | booklet name |
+| `name` | yes | phrase | 30 | booklet name — same phrase rule as intents |
 | `scenario` | no | word | 20 | situational tag (booklets cluster by family) |
 | `subtype` | yes | enum | — | only `interactive` (multi-round bracket); straight-line execution belongs to intents on x·solo |
-| `members` | — | names | 10 | member roster; the seat-count law wants **3–10 including the two system slots ·启/·收** (so 1–8 human members); reserved names (`·启 ·收 开启 结束 收场 prep wrapup`) are rejected at registration |
-| `prep` | no | text | 800 | content of the **·启 opening system step** — delivered automatically when the bracket opens, run before the greeting (e.g. read the booklet's state, report where we left off); empty = default (greet and stand by) |
-| `wrapup` | no | text | 800 | content of the **·收 closing system step** — delivered when the user presses Shutdown; the seat runs it and calls `step_done(member="·收")`, and only then does the engine settle and close (45 s grace as fallback; pressing Shutdown again forces) |
+| `members` | — | names | 10 | member roster; the seat-count law wants **3–10 including the two system slots ·open/·wrap** (so 1–8 human members); reserved names (`·open ·wrap 开启 结束 收场 prep wrapup`) are rejected at registration |
+| `prep` | no | text | 800 | content of the **·open opening system step** — delivered automatically when the bracket opens, run before the greeting (e.g. read the booklet's state, report where we left off); empty = default (greet and stand by) |
+| ~~`wrapup`~~ | — | — | — | **retired 2026-08-26**: closing is the engine's fixed final-cleanup contract, identical for every booklet — a declared `wrapup` field is refused at registration ("delete the field"). The ·wrap step itself remains (see Lifecycle) |
 
 ## 3. Lifecycle
 
@@ -113,7 +113,7 @@ mechanical trigger-time hash re-check is on the roadmap; today the
 freeze is an audit anchor, not a runtime gate.)
 
 **Retirement**: `intent_retire` (admin verb) opens a human gate
-(flow `qual·退役`); on approval the intent goes `retired`, leaves the
+(flow `qual·retire`); on approval the intent goes `retired`, leaves the
 hot index, and the key sets recompile.
 
 **Failure → surgery**: a failed solo order opens the surgery loop —
@@ -145,13 +145,14 @@ order failed (brackets exempt).
 
 **Protocols** (x·\<booklet\>): the power key opens the bracket — one
 bracket = one task, and opening triggers **no** member intent. The
-opening envelope carries the ·启 prep. Member keys deliver steps into
+opening envelope carries the ·open prep. Member keys deliver steps into
 the instance (each settles with `step_done(member=...)`); a member
 that declares `procedures` gets its preludes run by the engine first —
 materials land in the bracket's task directory and the step envelope
 ends with a `materials:` pointer (a failed prelude reports to the
 human and drops that step; the bracket stays open). Shutdown
-delivers the ·收 wrapup, waits for `step_done(·收)` or the 45 s grace,
+delivers ·wrap — the engine-owned final-cleanup step, the same fixed
+contract for every booklet — waits for `step_done(·wrap)` or the 45 s grace,
 then settles the task and closes the seat gracefully (ESC + /exit,
 tree-kill fallback); pressing Shutdown during the ceremony forces it.
 The instance home (workspace, memory, permission sediment) persists
@@ -186,10 +187,10 @@ A flow spec declares ordered steps — `procedure` (engine-run),
 forever if need be) — with `on_ok` / `on_fail` edges; the engine owns
 all routing, and an agent's job ends at settling its own step. The
 spec library is **engine-owned and seeded at boot** (the `spec_put`
-block at the top of `engine.run`): `qual·初生` (new intent),
-`qual·注册` (workspace registration), `qual·回炉` (rework),
-`qual·退役` (retire), `qual·protocol` (booklet registration),
-`validate`, `手术` (surgery), `retry` (deliver template
+block at the top of `engine.run`): `qual·new` (new intent),
+`qual·register` (workspace registration), `qual·rework` (rework),
+`qual·retire` (retire), `qual·protocol` (booklet registration),
+`validate`, `surgery` (surgery), `retry` (deliver template
 retry-fulfill), and `consolidate` (deliver template consolidate).
 Agents have no flow-submission verb.
 

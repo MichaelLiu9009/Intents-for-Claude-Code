@@ -87,8 +87,8 @@ class ProtoInstance:
         self.last_output = time.monotonic()
         self._lock = threading.Lock()
         self._step_ready = step_ready or (lambda: True)
-        # ·收 made real (user ruling 2026-08-24): the ack flag for
-        # the wrap-up ceremony — step_done(member="·收") sets it,
+        # ·wrap made real (user ruling 2026-08-24): the ack flag for
+        # the wrap-up ceremony — step_done(member="·wrap") sets it,
         # and the teardown thread waits on it or the grace clock
         self.wrap_evt = threading.Event()
 
@@ -145,7 +145,31 @@ class ProtoInstance:
             if member:
                 self.step_name = member
                 self.step_state = "running"
+                self.step_nudged = False
                 self.last_output = time.monotonic()   # reset the quiet clock
+
+    step_nudged = False      # one refused-key nudge per open step (audit 2026-08-26)
+
+    def step_open(self, member: str) -> None:
+        """Enter the member critical section at KEY-PRESS time (audit
+        2026-08-26): a prelude runs up to 30s per procedure on a
+        background thread, and the serialization guard reads
+        step_state at press time — flipping to running only when the
+        prelude finishes left the whole prelude window open for a
+        second key to jump the line."""
+        with self._lock:
+            self.step_name = member
+            self.step_state = "running"
+            self.step_nudged = False
+            self.last_output = time.monotonic()
+
+    def step_release(self, member: str) -> None:
+        """Back out of the critical section when the prelude fails or
+        the bracket vanished mid-prelude — only if the section is
+        still ours (a close may have reset it already)."""
+        with self._lock:
+            if self.step_name == member and self.step_state == "running":
+                self.step_state = "done"
 
     def flush(self) -> None:
         """Released on the pump's beat: plain envelopes
@@ -430,8 +454,12 @@ class Engine:
         protocol words fall back to the regular chain. Returns
         True when this trigger has been consumed by the protocol
         face."""
-        if name.endswith("·启") or name.endswith("·收"):
-            pname, opening = name[:-2], name.endswith("·启")
+        if name.endswith("·open") or name.endswith("·wrap"):
+            # length-aware strip (Latinization 2026-08-26: the CJK
+            # suffixes were 2 chars, a fixed [:-2] survived the
+            # rename and silently mangled the booklet name)
+            suffix = "·open" if name.endswith("·open") else "·wrap"
+            pname, opening = name[:-len(suffix)], suffix == "·open"
             if opening:
                 self._proto_start(pname, user_input, by=by)
             else:
@@ -456,7 +484,7 @@ class Engine:
 
     def _proto_start(self, pname: str, user_input: str = "",
                      by: str = "deck") -> dict:
-        """Start key / ·启: open the bracket + lazily start the
+        """Start key / ·open: open the bracket + lazily start the
         household instance + open the card-stream window.
         Idempotent (household rule): an already-open bracket just
         points back to the same instance (just reopen the
@@ -471,7 +499,7 @@ class Engine:
             self._say_engine(f"Protocol '{pname}' is already open "
                              f"(task {br['id']}).", instance=seat)
             return {"ok": True, "task": br["id"], "note": "already open"}
-        if not self._admit_spec(f"protocol:{pname}", f"{pname}·启"):
+        if not self._admit_spec(f"protocol:{pname}", f"{pname}·open"):
             return {"error": "queue refused"}
         t = self.store.chain_start(f"protocol:{pname}", issuer="user",
                                    intent=pname,
@@ -488,7 +516,7 @@ class Engine:
         return {"ok": True, "task": t["id"]}
 
     def _proto_close(self, pname: str, by: str = "deck") -> dict:
-        """·收 / Shutdown, first half: a person closing the bracket
+        """·wrap / Shutdown, first half: a person closing the bracket
         is the acceptance ticket — the engine settles the account
         directly."""
         br = self._bracket_of(pname)
@@ -512,6 +540,17 @@ class Engine:
                     f"closed the bracket; the engine has settled the "
                     f"task — no task_done needed, just wrap up whatever "
                     f"is in flight")
+        # Stale-gate sweep (audit 2026-08-26): an unanswered ask_user
+        # card survives the bracket and, because the serialization
+        # guard counts ANY open ask card on this seat, would lock the
+        # NEXT bracket's member keys behind a question nobody can
+        # meaningfully answer any more.
+        with self._card_lock:
+            stale = [cid for cid, cd in self._cards.items()
+                     if cd.get("instance") == seat
+                     and cd.get("kind") == "ask"]
+        for cid in stale:
+            self._card_close(cid, "bracket-closed")
         self._say_engine(f"Protocol '{pname}' closed (task {br['id']}).",
                          instance=seat)
         # Booklet-consolidation prompt (reshaped 2026-08-25: same
@@ -595,7 +634,12 @@ class Engine:
             # The host seat hears about the drop too (user ruling
             # 2026-08-26): without this nudge it has no idea a key
             # bounced, and no urgency to claim.
-            if inst0.alive():
+            if inst0.alive() and not inst0.step_nudged:
+                # One nudge per open step (audit 2026-08-26): refusals
+                # happen precisely while the host is busy, so every
+                # extra bounce would just pile identical notes into a
+                # queue that cannot flush until the step settles.
+                inst0.step_nudged = True
                 inst0.enqueue(
                     f"[task {br['id']}] note | member key '{member}' "
                     f"was dropped — the ongoing step ('{busy}') is "
@@ -631,6 +675,7 @@ class Engine:
         # rule as a physical-layer fault). Runs on a background
         # thread: the trigger entry point doesn't carry the 30s
         # hard timeout.
+        inst.step_open(member)
         def _run(tid=br["id"], line=line, procs=tuple(procs),
                  input_=user_input.strip()):
             td = self._task_dir(tid)
@@ -651,6 +696,7 @@ class Engine:
                     self.journal.row("procedure", "step-prelude-failed",
                                     task=tid, intent=member, proc=n,
                                     why=str(err)[:300])
+                    inst.step_release(member)
                     self._say_engine(
                         f"Step '{member}' not delivered: prelude "
                         f"procedure '{n}' failed — {err}. "
@@ -667,6 +713,15 @@ class Engine:
             elif mats:
                 line += (" | materials: text entries appended to "
                          "materials.jsonl in the task dir")
+            cur = self._bracket_of(pname)
+            if cur is None or cur["id"] != tid:
+                # The bracket closed while the prelude ran (audit
+                # 2026-08-26): delivering now would push a work step
+                # behind the final cleanup, into a settled account.
+                self.journal.row("procedure", "prelude-orphaned",
+                                task=tid, intent=member)
+                inst.step_release(member)
+                return
             inst.enqueue_step(line, member=member)
         threading.Thread(target=_run, daemon=True,
                          name=f"step-prelude-{member}").start()
@@ -768,10 +823,10 @@ class Engine:
 
     def _proto_shutdown(self, pname: str, force: bool = False) -> dict:
         """Shutdown key: **the wrap-up ceremony** (user ruling
-        2026-08-24: ·收 made real; 2026-08-26: content fixed) — if
+        2026-08-24: ·wrap made real; 2026-08-26: content fixed) — if
         the bracket is open and the seat is alive, first deliver the
-        system ·收 step (the engine-owned final-cleanup contract,
-        never a declared text), wait for step_done(·收) or the grace
+        system ·wrap step (the engine-owned final-cleanup contract,
+        never a declared text), wait for step_done(·wrap) or the grace
         clock, **then** settle the account + graceful seat exit
         (ESC + /exit, tree-kill as fallback) + the window self-
         closes. Pressing Shutdown again = force (skip the wait);
@@ -790,7 +845,7 @@ class Engine:
         if (br is not None and not force
                 and isinstance(inst0, ProtoInstance) and inst0.alive()):
             self._wrapping.add(pname)
-            # Wrapup is engine-owned (user ruling 2026-08-26): ·收 is
+            # Wrapup is engine-owned (user ruling 2026-08-26): ·wrap is
             # the fixed final-cleanup contract — declared wrapups are
             # refused at registration and never reach this path (a
             # declared one once smuggled ceremony in and blocked
@@ -798,13 +853,13 @@ class Engine:
             wtxt = defaults.PROTO_WRAP_FINAL
             inst0.wrap_evt.clear()
             inst0.enqueue_step(
-                f"[task {br['id']}] step ·收 | {wtxt} — when done, call "
-                f"step_done(member=\"·收\"); the seat closes right "
+                f"[task {br['id']}] step ·wrap | {wtxt} — when done, call "
+                f"step_done(member=\"·wrap\"); the seat closes right "
                 f"after (grace "
-                f"{int(defaults.PROTO_WRAP_GRACE_S)}s).", member="·收")
+                f"{int(defaults.PROTO_WRAP_GRACE_S)}s).", member="·wrap")
             self.journal.row("protocol", "wrapup", intent=pname,
                             task=br["id"])
-            self._say_engine(f"Protocol '{pname}': wrap-up step (·收) "
+            self._say_engine(f"Protocol '{pname}': wrap-up step (·wrap) "
                              f"delivered — closing after it settles; "
                              f"press Shutdown again to force.",
                              instance=seat)
@@ -1177,7 +1232,7 @@ class Engine:
         # words are always caught by _protocol_route (bracket not
         # open = lazy spawn opens the booklet); a name that reaches
         # here must be a standalone intent.
-        if any(str(x.get("spec") or "") == "手术"
+        if any(str(x.get("spec") or "") == "surgery"
                and x.get("intent") == name
                for x in self.store.queue_view()):
             # §2g×v9 suspension lock (single-item granularity): surgery is on the table, this intent's trigger is refused
@@ -1265,7 +1320,7 @@ class Engine:
         2026-08-23: **lists only non-protocol intents**). Member
         words belong to each protocol's own flow-window IME
         (_flow_intents_frame); opening/closing a booklet goes
-        through the deck's Start/Shutdown keys, and the ·启/·收
+        through the deck's Start/Shutdown keys, and the ·open/·wrap
         virtual words leave the dictionary (bound grid cells still
         recognize them — the trigger grammar isn't retired, it's
         just no longer exposed)."""
@@ -1355,7 +1410,7 @@ class Engine:
         presses it (a gate-type validator is this hand — there's
         no fail, not approving just stops, cancel is a separate
         path). Provisioning is no longer a chain-completion special
-        case: the qual·初生 gate node hangs effect ok:provision,
+        case: the qual·new gate node hangs effect ok:provision,
         settle stamps everything through one unified route."""
         t = self.store.task(tid)
         if t is None or t["status"] != "gated":
@@ -1386,7 +1441,7 @@ class Engine:
         # R5 two-round ruling (2026-08-23): retry always opens a
         # **retry bracket** and casts to sidecar (fulfilled directly,
         # no longer entering executor) — the old rule "x· single
-        # retry = open 手术 (surgery)" retires with it; 手术 now has
+        # retry = open surgery (surgery)" retires with it; surgery now has
         # only one entry point, the failed-proposal card.
         busy = self.store.inflight(name)
         if busy:
@@ -1941,7 +1996,7 @@ class Engine:
             return
         if action == "surgery" and isinstance(data, str) and data:
             # §2g failed path: proposal-card approve = the human
-            # gate, opens surgery (手术)
+            # gate, opens surgery (surgery)
             self._card_close(cid, "answered")
             ft = self.store.task(int(data)) if data.isdigit() else None
             if ft is not None:
@@ -2441,7 +2496,7 @@ class Engine:
         Collects only the tool name + a coarse-grained target
         (path / command's first word), never the payload. Three
         consumers: the task card display (M23) / the completion
-        receipt / pruning reconciliation; the §2g surgery (手术)
+        receipt / pruning reconciliation; the §2g surgery (surgery)
         ring uses it as a residue map. Load-bearing rule: the bus
         never throws back, bad material is silently dropped."""
         try:
@@ -2495,7 +2550,7 @@ class Engine:
 
     def _residue_md(self, tid: int) -> str:
         """§2g residue map: a failed order's bus event list → the
-        surgery (手术) package's troubleshooting checklist (tool +
+        surgery (surgery) package's troubleshooting checklist (tool +
         target, deduped, order preserved, capped at 40 lines)."""
         ev = self._task_dir(tid) / "events.jsonl"
         seen, lines = set(), []
@@ -2522,15 +2577,15 @@ class Engine:
                        f"{ev}")
         return "\n".join(cut)
 
-    # ---- §2g surgery (手术) ring (executor failure loop; since v14
+    # ---- §2g surgery (surgery) ring (executor failure loop; since v14
     #      only the x·solo seat exists) --------------------------------
 
     def _surgery_open(self, ft: dict, note: str) -> None:
-        """Open the table (surgery, 手术) — two entry points converge
+        """Open the table (surgery, surgery) — two entry points converge
         here: retry with a note / failed-proposal-card approve (each
         one's human touch is already done at its entry point). ft =
         the failed x· order. The suspension granularity is a single
-        intent (a 手术 lock on the trigger port); what gets fixed is
+        intent (a surgery lock on the trigger port); what gets fixed is
         the intent itself — the folder is edited and re-registered
         through workspace_submit (intent_update is retired; the
         directory is the source), settlement auto-replays."""
@@ -2539,9 +2594,9 @@ class Engine:
                              f"flight — open surgery after it "
                              f"lands.")
             return
-        if not self._admit_spec("手术", f"surgery: {ft['intent']}"):
+        if not self._admit_spec("surgery", f"surgery: {ft['intent']}"):
             return
-        st = self.store.chain_start("手术", issuer="user",
+        st = self.store.chain_start("surgery", issuer="user",
                                     intent=ft["intent"],
                                     payload=note.strip() or None,
                                     origin=ft["id"])
@@ -2555,7 +2610,7 @@ class Engine:
         self._task_bcast()
 
     def _surgery_settle(self, t: dict, outcome: str) -> None:
-        """Settle a surgery (手术) order: ok → replay directly
+        """Settle a surgery (surgery) order: ok → replay directly
         (task_done is the sole ignition signal; the intent revision
         takes effect immediately, no approval-queue step); fail /
         timeout → unlock back to the human face, no replay."""
@@ -2816,7 +2871,7 @@ class Engine:
                 and not str(t.get("spec") or "").startswith("protocol:")):
             # §2g×v9: an executor seat finishing → the human gets
             # notified. ok but unsatisfied = retry with a note
-            # (opens surgery/手术); fail = an automatic debug
+            # (opens surgery/surgery); fail = an automatic debug
             # proposal, still needs approve to open the table (each
             # of the two entry points gets one human touch). M26:
             # bracket settlement is not on this list — closing a
@@ -2856,7 +2911,7 @@ class Engine:
                              f"({outcome}) — "
                              f"{(outcome_text or '')[:160]}")
         if (node.get("kind") == "deliver"
-                and str(t.get("spec") or "") == "手术"
+                and str(t.get("spec") or "") == "surgery"
                 and not self.store.chain_cancelled(t["chain_id"])):
             self._surgery_settle(t, outcome)    # §2g settling is the ignition signal
         edge = str((node.get("on_ok") if outcome == "ok"
@@ -2955,7 +3010,7 @@ class Engine:
             # Rework law (2026-08-11): bad units suspend back to
             # draft (IME/deck naturally isolated); repair goes
             # through the same QA path as creation (the edge has
-            # rerouted to qual·回炉)
+            # rerouted to qual·rework)
             if it is None or it["status"] != "provisioned":
                 return
             self.store.intent_revise(name, status="draft")
@@ -2977,6 +3032,22 @@ class Engine:
                 # open-bracket case was refused at proposal time.
                 p = self.store.proto_get(name)
                 if p is None or p["status"] != "provisioned":
+                    return
+                # Re-check at approval (audit 2026-08-26): the open-
+                # bracket refusal at proposal time is stale by now —
+                # the gate can sit for minutes, and Start is not
+                # blocked while it waits. Retiring an open booklet
+                # would strand a running task and a live seat with
+                # every close path guard-refused (member keys, Start,
+                # the status dial all need provisioned).
+                if self._bracket_of(name) is not None:
+                    self.journal.row("protocol", "retire-refused",
+                                    intent=name, reason="bracket-open")
+                    self._say_engine(
+                        f"Booklet '{name}' NOT retired: its bracket "
+                        f"was opened while the approval card waited. "
+                        f"Shutdown the booklet first, then propose "
+                        f"retirement again.")
                     return
                 self.store.proto_set_status(name, "retired")
                 for m in (p.get("members") or []):
@@ -3030,8 +3101,8 @@ class Engine:
                              f"Intents deck set (restart the Stream "
                              f"Deck app once to see it in the sidebar; "
                              f"already-placed keys pick up route "
-                             f"changes on their own). To test it, pin "
-                             f"it and press Validate (optional).")
+                             f"changes on their own). To test it, just "
+                             f"press its key.")
             self.channel.broadcast(self._intents_frame())
         elif verb == "provision_workspace":
             # §2u register-is-compile: one card approves the whole
@@ -3276,7 +3347,7 @@ class Engine:
             self.store.task_update(t["id"], status="failed")
             # timeout folds into fail (M12 has no third state): the
             # ledger split follows the node's attribute, downstream
-            # follows the on_fail edge (e.g. qual·回炉 n1 timeout =
+            # follows the on_fail edge (e.g. qual·rework n1 timeout =
             # jump back to rework)
             nxt = self._settle(t, "fail", outcome_text="timeout")
             self.journal.row("chain", "timeout", task=t["id"],
@@ -3390,7 +3461,7 @@ class Engine:
                 input=str(t.get("payload") or "").strip() or "(none)",
                 members=("、".join(proto["members"])
                          or "(none — free-form multi-round)"),
-                # ·启 made concrete (user ruling 2026-08-24):
+                # ·open made concrete (user ruling 2026-08-24):
                 # opening is a system step, the booklet declares
                 # its content (prep); empty = default greeting-
                 # then-standby
@@ -3415,7 +3486,7 @@ class Engine:
                 acceptance=(it or {}).get("instructions")
                 or defaults.XSOLO_ACCEPT_DEFAULT)
         elif tpl == "debug" or t.get("spec") == "debug":
-            # Rework diagnosis node (qual·回炉.n0): reason = the
+            # Rework diagnosis node (qual·rework.n0): reason = the
             # history line from the jump origin — the raw error
             # text from a firing failure / sim's complaint. (For
             # legacy debug-chain in-flight rings, reason lives in
@@ -3951,7 +4022,7 @@ class Engine:
             if not isinstance(inst, ProtoInstance):
                 return {"error": f"step_done: no instance for '{pn}'"}
             mem = str(f.get("member") or "").strip() or inst.step_name
-            if mem == "·收":
+            if mem == "·wrap":
                 # Closing-ceremony acknowledgment (user ruling
                 # 2026-08-24): releases the wrap-up thread
                 inst.wrap_evt.set()
@@ -4005,7 +4076,7 @@ class Engine:
             # verdict is entirely settle's business (the ledger
             # split follows the node's attribute, reinstate/rework/
             # go-live all live in effect and the edge table — M12:
-            # auto-sim is just the next edge from qual·回炉 n0→n1,
+            # auto-sim is just the next edge from qual·rework n0→n1,
             # rework is just the jump-back edge n1→n0, no separate
             # chain needed)
             if outcome in ("ok", "ok_issue"):
@@ -4565,7 +4636,7 @@ class Engine:
         keeps the skill in his local, edit it there and resubmit
         when analyzing a retry)."""
         p = self.store.proto_get(name) or {}
-        role = ("interactive bracket; opened by '" + name + "·启', "
+        role = ("interactive bracket; opened by '" + name + "·open', "
                 "read while hosting in protocol state"
                 if p.get("subtype") == "interactive" else
                 "executor aggregation; execution lives on the x· "
@@ -4582,7 +4653,7 @@ class Engine:
     def _intent_retire(self, f: dict, caller: str) -> dict:
         """Retirement proposal (live-fire precedent 2026-08-23: there
         was no verb for this before, retirement required stopping
-        the engine for manual surgery). Agent proposes -> qual·退役
+        the engine for manual surgery). Agent proposes -> qual·retire
         (retire) human gate -> effect retire_intent, a soft
         retirement. Termination is a ruling, not a record -- the
         person who approves is always the user; the full history
@@ -4732,6 +4803,16 @@ class Engine:
                              f"internal spaces/hyphens ok, no dots "
                              f"or path separators) — it doubles as "
                              f"the workspace directory name"}
+        clash = self.store.case_clash(name)
+        if clash is not None:
+            return {"error": f"intent_submit: '{name}' collides with existing "
+                             f"'{clash}' — Windows folds case, both "
+                             f"would land in one workspace folder; "
+                             f"pick a distinct name"}
+        if name.strip().lower() in wspace._WIN_RESERVED:
+            return {"error": f"intent_submit: '{name}' is a Windows reserved "
+                             f"device name — it cannot be a folder; "
+                             f"pick another name"}
         title = str(f.get("title") or "").strip()
         scenario = str(f.get("scenario") or "").strip()
         # I-E-R (2026-08-16): the declaration-face key is
@@ -4892,6 +4973,16 @@ class Engine:
                              f"(≤{defaults.INTENT_NAME_MAX} chars; "
                              f"internal spaces/hyphens ok, no dots "
                              f"or path separators)"}
+        clash = self.store.case_clash(name)
+        if clash is not None:
+            return {"error": f"intent_submit(protocol): '{name}' collides with existing "
+                             f"'{clash}' — Windows folds case, both "
+                             f"would land in one workspace folder; "
+                             f"pick a distinct name"}
+        if name.strip().lower() in wspace._WIN_RESERVED:
+            return {"error": f"intent_submit(protocol): '{name}' is a Windows reserved "
+                             f"device name — it cannot be a folder; "
+                             f"pick another name"}
         if name == defaults.XSOLO_NAME:
             return {"error": f"'{defaults.XSOLO_NAME}' is the "
                              f"executor seat's reserved name"}
@@ -4959,10 +5050,10 @@ class Engine:
                          f"intent.json (steps required) + tools/ "
                          f"under {wspace.MEMBERS_DIR}/<member>/; "
                          f"protocol.json's members holds the roster "
-                         f"(3–10 counting the two system slots ·启/"
-                         f"·收 — **opening/closing are not members**: "
+                         f"(3–10 counting the two system slots ·open/"
+                         f"·wrap — **opening/closing are not members**: "
                          f"they are system steps, opening setup goes "
-                         f"in the prep field; the closing step (·收) "
+                         f"in the prep field; the closing step (·wrap) "
                          f"is the engine's fixed final-cleanup "
                          f"contract, not declarable — closing domain "
                          f"work belongs in a member step); "
@@ -5075,7 +5166,7 @@ class Engine:
             mdecls, mstaged, mprobs = wspace.resolve_members(d, decl)
             for m in mem:
                 if m in defaults.PROTO_RESERVED_MEMBERS:
-                    # ·启/·收 made concrete (user ruling 2026-08-24):
+                    # ·open/·wrap made concrete (user ruling 2026-08-24):
                     # open/close are two built-in system steps, a
                     # user member can't occupy that slot -- content
                     # goes through the declaration fields instead
@@ -5083,7 +5174,7 @@ class Engine:
                                   f"slot — opening/closing are not "
                                   f"members: opening setup goes in "
                                   f"protocol.json's prep field; the "
-                                  f"closing step (·收) is the "
+                                  f"closing step (·wrap) is the "
                                   f"engine's fixed final-cleanup "
                                   f"contract, not declarable — "
                                   f"closing domain work belongs in a "
@@ -5106,14 +5197,14 @@ class Engine:
                                  "by one; one bad member refuses the "
                                  "booklet) —\n"
                                  + "\n".join("· " + p for p in mprobs)}
-            seats = len(mem) + 2      # §2i seat-count rule: ·启/·收 the two placeholder words count too
+            seats = len(mem) + 2      # §2i seat-count rule: ·open/·wrap the two placeholder words count too
             if not (defaults.PROTO_MIN_SEATS <= seats
                     <= defaults.PROTO_MAX_SEATS):
                 return {"error": f"workspace_submit: seat count "
                                  f"{seats} out of bounds — the law is "
                                  f"{defaults.PROTO_MIN_SEATS}–"
                                  f"{defaults.PROTO_MAX_SEATS} "
-                                 f"(counting the ·启/·收 system "
+                                 f"(counting the ·open/·wrap system "
                                  f"slots); too few, don't aggregate; "
                                  f"too many, split into two"}
             sp, sh = found["skill"]
@@ -5122,10 +5213,10 @@ class Engine:
                 return {"error": f"workspace_submit: skill.md over "
                                  f"the cap ({len(skill)}/"
                                  f"{defaults.PROTO_SKILL_MAX} chars)"}
-            # ·启 content (user ruling 2026-08-24): prep = the
+            # ·open content (user ruling 2026-08-24): prep = the
             # opening housekeeping — a declaration field, not a
             # member; over the limit rejects the whole catalog.
-            # wrapup left this path (user ruling 2026-08-26): ·收 is
+            # wrapup left this path (user ruling 2026-08-26): ·wrap is
             # engine-owned — a declared wrapup is refused by the
             # schema gate, and the engine always delivers
             # PROTO_WRAP_FINAL.
@@ -5154,7 +5245,7 @@ class Engine:
             staged += mstaged
             staged.append("members: " + ", ".join(mem))
             if prep:
-                staged.append("prep (·启 system-step content): "
+                staged.append("prep (·open system-step content): "
                               "declared")
         # write the declared content back into the library (the
         # directory is source -- the copy on disk is authoritative)
@@ -5476,7 +5567,7 @@ class Engine:
         # entry point has three separated powers: a chain never
         # opens a chain, a human opens a chain, an edge reroutes
         # internally.
-        # qual·初生 (genesis): the submit entry point, a human
+        # qual·new (genesis): the submit entry point, a human
         # approval gate -- approval means it goes on the shelf
         # (effect).
         self.store.spec_put(
@@ -5493,7 +5584,7 @@ class Engine:
                  "effect": "ok:provision",
                  "on_ok": "end", "on_fail": "end"},   # a gate has no fail path (cancel is a separate route)
             ])
-        # qual·注册 (registration) (M20 §2u, user ruling 2026-08-15):
+        # qual·register (registration) (M20 §2u, user ruling 2026-08-15):
         # **the only human gate for a folder submission**. What's
         # being approved is "going live", not the content (the
         # harness already approved once at write time; under auto
@@ -5516,7 +5607,7 @@ class Engine:
                  "effect": "ok:provision_workspace",
                  "on_ok": "end", "on_fail": "end"},
             ])
-        # qual·退役 (retire) (live-fire precedent 2026-08-23):
+        # qual·retire (retire) (live-fire precedent 2026-08-23):
         # termination is a ruling, not a record -- the agent
         # proposes (intent_retire), the human approves for it to
         # take effect. effect is a soft retirement: leaves the
@@ -5555,7 +5646,7 @@ class Engine:
                  "effect": "ok:provision_protocol",
                  "on_ok": "end", "on_fail": "end"},
             ])
-        # qual·回炉 (rework): an edge-entry flow (the rework rule)
+        # qual·rework (rework): an edge-entry flow (the rework rule)
         # -- n0 diagnosis (repair = folder edits accumulated over
         # multiple turns + workspace_submit; intent_update is
         # retired, closing the books ok = submit the repair)
@@ -5590,7 +5681,7 @@ class Engine:
         # human-triggered by pressing "validate" (issuer=user
         # bypasses the head check) -- a single node, no effect, no
         # rerouting; a rework item's sim already belongs to
-        # qual·回炉.n1, no longer borrows this one.
+        # qual·rework.n1, no longer borrows this one.
         self.store.spec_put(
             "validate", head="engine", priority=defaults.PRIORITY_SELF,
             consequence="sim self-test (optional, human-triggered by "
@@ -5638,7 +5729,7 @@ class Engine:
         # sole ignition signal (the old proto_park approval-parking
         # never went live and was deleted, audit 2026-08-25).
         self.store.spec_put(
-            "手术", head="user", priority=defaults.PRIORITY_ERROR,
+            "surgery", head="user", priority=defaults.PRIORITY_ERROR,
             consequence="the executor's failure loop (surgery): the "
                         "maintenance seat clears residue + repairs "
                         "the intent; settling auto-replays the "
@@ -5648,8 +5739,8 @@ class Engine:
                     "template": "surgery", "accounting": "test",
                     "on_ok": "end", "on_fail": "end"}])
         # old-name sweep (M12 migration: debug/requalify's
-        # standalone chain type folds into qual·回炉, intent-creation
-        # is formally renamed qual·初生; v16: qual·procedure retires
+        # standalone chain type folds into qual·rework, intent-creation
+        # is formally renamed qual·new; v16: qual·procedure retires
         # along with the physical-layer ruling) -- only clears the
         # engine's own spec rows; historical journal/tasks stay
         # read-only and unmigrated, an in-flight old loop is

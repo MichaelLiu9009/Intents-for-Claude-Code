@@ -154,7 +154,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check("2b class retired: submit takes no class at all, the "
           "row keeps the fossil column default",
           r.get("ok") and (eng.store.intent("野建") or {})
-          .get("class") == "未分类")
+          .get("class") == "unfiled")
     post({"verb": "intent_submit", "name": "开谱", "title": "开谱铺屏",
           "scenario": "练琴",
           "steps": "1. open D:/scores 里最新的 PDF(默认阅读器)"})

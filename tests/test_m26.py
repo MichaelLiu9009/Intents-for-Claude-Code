@@ -361,16 +361,16 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           "seat",
           "\x1b" in qinst.host.keys)
     ans = trigger("protocol=%E7%BB%83%E9%A2%98&op=shutdown")
-    check("5b op=shutdown posts the ·收 step first (wrap-up "
+    check("5b op=shutdown posts the ·wrap step first (wrap-up "
           "ceremony, user's ruling 08-24): bracket not closed, seat "
           "not killed",
           ans.get("ok") is True and ans.get("note") == "wrap-up first"
           and eng._bracket_of("练题") is not None
           and "练题" in eng._xhosts
-          and wait_for(lambda: any("·收" in s
+          and wait_for(lambda: any("·wrap" in s
                                    for s in qinst.host.sent)) is not None)
-    post({"verb": "step_done", "member": "·收", "token": "ptk26"})
-    check("5b2 step_done(·收) clears it: closes bracket + stops seat "
+    post({"verb": "step_done", "member": "·wrap", "token": "ptk26"})
+    check("5b2 step_done(·wrap) clears it: closes bracket + stops seat "
           "(ownership retained), other books unaffected",
           wait_for(lambda: eng._bracket_of("练题") is None
                    and "练题" not in eng._xhosts) is not None
@@ -396,9 +396,9 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           and ans.get("step") is None)
     menu = [r["name"] for r in eng._intent_menu()]
     check("5e sidecar IME lists only non-protocol intents (members "
-          "and ·启/·收 never surface)",
+          "and ·open/·wrap never surface)",
           "报时" in menu and "提示" not in menu and "记录" not in menu
-          and not any(n.endswith("·启") or n.endswith("·收")
+          and not any(n.endswith("·open") or n.endswith("·wrap")
                       for n in menu))
     fi = eng._flow_intents_frame("x·练题")
     check("5f seat IME only has this book's member words",
@@ -453,7 +453,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           "flow_open" in hub_body and "iframe" in hub_body
           and "·engine" in hub_body and '"/observe"' in hub_body)
 
-    trigger("protocol=%E5%A4%8D%E7%9B%98&op=shutdown")   # opens the ·收 ceremony
+    trigger("protocol=%E5%A4%8D%E7%9B%98&op=shutdown")   # opens the ·wrap ceremony
     trigger("protocol=%E5%A4%8D%E7%9B%98&op=shutdown")   # second press = force
     got_close = None
     t0 = time.time()

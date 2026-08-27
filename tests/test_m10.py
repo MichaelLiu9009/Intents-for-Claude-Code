@@ -105,7 +105,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:   # Windows
               "version (v5 provision cols + v6 node five attrs; "
               "version pinned to SCHEMA_VERSION, no re-edit per "
               "bump), last_touched backfills updated_at",
-              v == SCHEMA_VERSION and row["class"] == "未分类"
+              v == SCHEMA_VERSION and row["class"] == "unfiled"
               and row["scope"] == "sidecar"
               and row["migrated_to"] is None
               and row["last_touched"] == row["updated_at"]
@@ -259,7 +259,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:   # Windows
     check("9g class retired: any passed-in class is ignored, the "
           "row keeps the fossil column default",
           r.get("ok")
-          and (eng.store.intent("野类") or {}).get("class") == "未分类")
+          and (eng.store.intent("野类") or {}).get("class") == "unfiled")
     d10 = _ws.decl(eng, "旧一")
     d10["class"] = "自创"
     _ws.write(eng, "旧一", d10)
@@ -369,7 +369,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:   # Windows
     check("14 §3c ticketing: scope=caller stamped by the engine, "
           "the agent has no such field; passed-in class ignored "
           "(fossil default)",
-          row["scope"] == "sidecar" and row["class"] == "未分类")
+          row["scope"] == "sidecar" and row["class"] == "unfiled")
     check("15 class retired off the registration card: no Class "
           "line renders",
           "Class:" not in tpl and "新类" not in tpl)

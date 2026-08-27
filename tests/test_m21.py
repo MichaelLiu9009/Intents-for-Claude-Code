@@ -201,8 +201,8 @@ with tempfile.TemporaryDirectory() as tmp:
           "ruling 2026-08-23: marker function words and member "
           "words stay hidden; trigger grammar is still "
           "recognized, marker doesn't occupy the intents table)",
-          not any(n.endswith("·启") or n.endswith("·收") for n in menu)
-          and eng.store.intent("陪练·启") is None)
+          not any(n.endswith("·open") or n.endswith("·wrap") for n in menu)
+          and eng.store.intent("陪练·open") is None)
 
     # ---- bracket semantics (M26: the bracket lives in the x·陪练
     #      seat)------------------------
@@ -214,7 +214,7 @@ with tempfile.TemporaryDirectory() as tmp:
     fx = FakeXHost()
     eng._xhosts["solo"] = fx
     eng._tokens["xst21"] = "x·solo"
-    c.send(json.dumps({"type": "intent", "name": "陪练·启",
+    c.send(json.dumps({"type": "intent", "name": "陪练·open",
                        "input": "肖邦"}))
     br = wait_for(lambda: next(
         (t for t in eng.store.tasks_recent(20)
@@ -254,7 +254,7 @@ with tempfile.TemporaryDirectory() as tmp:
           and not any("挥拍" in s for s in pinst.host.sent))
     post({"verb": "task_done", "task": dt9["id"], "outcome": "ok",
           "summary": "挥好了(并行)", "token": "xst21"})
-    c.send(json.dumps({"type": "intent", "name": "陪练·启", "input": ""}))
+    c.send(json.dumps({"type": "intent", "name": "陪练·open", "input": ""}))
     nested = frame_where(lambda f: f.get("type") == "chat"
                          and f.get("name") == "engine"
                          and "already open" in f.get("text", ""), 4)
@@ -269,7 +269,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check("11 §2 deadline-law exemption: protocol task is immune "
           "to TASK_TIMEOUT",
           eng.store.task(br["id"])["status"] == "running")
-    c.send(json.dumps({"type": "intent", "name": "陪练·收", "input": ""}))
+    c.send(json.dumps({"type": "intent", "name": "陪练·wrap", "input": ""}))
     closed = wait_for(lambda: (eng.store.task(br["id"]) or {})
                       .get("status") == "done")
     rec = eng.store.record_for(br["id"]) or {}

@@ -101,11 +101,14 @@ TOOLS = [
                                    "description": "one-line title "
                                                   "(for humans)"},
                          "scenario": {"type": "string",
-                                      "description": "when to use it — "
-                                                     "write WHEN, not "
-                                                     "HOW; vector "
-                                                     "recall runs on "
-                                                     "this line"},
+                                      "description": "ONE word (≤20 "
+                                                     "chars, refused "
+                                                     "otherwise): the "
+                                                     "situational tag "
+                                                     "recall clusters "
+                                                     "on — a family "
+                                                     "label, not a "
+                                                     "sentence"},
                          "steps": {"type": "string",
                                    "description": "E section: command "
                                                   "sequence with "
@@ -136,20 +139,23 @@ TOOLS = [
                                             "order's Materials "
                                             "section. Unknown names "
                                             "refuse with the library "
-                                            "listed. Not for booklet "
-                                            "members"}},
+                                            "listed. Booklet members "
+                                            "declare them the same "
+                                            "way (prelude runs on "
+                                            "the member key)"}},
                      "required": ["name", "scenario"]}},
     {"name": "workspace_submit",
      "description": "Submit by folder = register = compile (§2u stage "
                     "two, the ONLY human gate). The engine validates "
                     "structure against the schema sheet, resolves "
-                    "declared names to files, stamps hashes, then one "
+                    "declared names to files, then one "
                     "card asks the human to approve GOING LIVE (the "
                     "card carries no full text — to inspect, open the "
-                    "directory). Only approved items can trigger. ANY "
-                    "later change on disk requires re-submitting "
-                    "before it takes effect — the library keeps "
-                    "serving the approved version. Validation failures "
+                    "directory). Only approved items can trigger. "
+                    "Steps and acceptance serve from the registered "
+                    "copy; tool files resolve from disk at delivery — "
+                    "re-submit after any edit so the registration and "
+                    "the card reflect it. Validation failures "
                     "come back itemized — fix and resubmit. Protocols "
                     "submit as a whole booklet (skill + every member "
                     "validated and gated together; one bad piece "
@@ -236,7 +242,7 @@ TOOLS = [
                      "required": []}},
     {"name": "intent_memory_index",
      "description": "Call at start of work: your intent surface — the "
-                    "hot container's meta rows (name/scenario/segment) "
+                    "hot container's meta rows (name/scenario) "
                     "plus container level and cold-library count. "
                     "Execution detail is NOT here; fetch by name with "
                     "intent_get when needed. Snapshot semantics — call "

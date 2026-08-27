@@ -3,7 +3,7 @@ issues found on the real deck rig) --
 
 (1) intent_retire: no verb existed before this for retirement (could
     only stop-the-engine and hand-edit) -- agent proposes
-    -> qual·退役 human gate -> effect soft-retire (drops from the
+    -> qual·retire human gate -> effect soft-retire (drops from the
     roster, keeps history).
 (2) _seat_approve with multiple cards stacked: the key always answers
     the newest card, and how many remain must be stated explicitly.
@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     check("1a proposal opens the gate (gated task)",
           r.get("ok") and r.get("task"))
     t = eng.store.task(r["task"])
-    check("1b gate ticket lands on qual·退役", t is not None
+    check("1b gate ticket lands on qual·retire", t is not None
           and t.get("spec") == FLOW_RETIRE and t["status"] == "gated")
     r2 = eng._mcp_call({"verb": "intent_retire", "name": "报时"})
     check("1c duplicate proposal doesn't stack a gate "

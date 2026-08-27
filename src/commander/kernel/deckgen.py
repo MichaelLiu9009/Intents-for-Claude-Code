@@ -393,7 +393,7 @@ INTENTS_PLUGIN_UUID = LEGACY_INTENTS_UUID          # back-compat alias
 # DECK-UI refresh (user ruling 2026-08-23; 08-24 merged start/stop
 # key): system control keys are pure graphics, zero text — power
 # glyph open/close (tap toggles: closed book opens, an open book
-# wraps up via ·收; pressing again mid-ceremony = force) / green
+# wraps up via ·wrap; pressing again mid-ceremony = force) / green
 # check approve / yellow square interrupt. Key-face grammar:
 # graphics = engine system key, text = user-customized key
 # (member/intent).

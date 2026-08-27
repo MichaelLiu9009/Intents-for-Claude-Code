@@ -82,11 +82,11 @@ def wait_for(fn, timeout=8.0):
 with tempfile.TemporaryDirectory() as tmp:
     ws_root = Path(tmp)
     st = Store(ws_root / "state.db")
-    check("1 schema: user_version=19 (v19 ·启/·收 made real: "
+    check("1 schema: user_version=20 (v20 release Latinization: "
           "protocols.prep/wrapup columns), intents.born_session "
           "present",
-          SCHEMA_VERSION == 19
-          and st._db.execute("PRAGMA user_version").fetchone()[0] == 19
+          SCHEMA_VERSION == 20
+          and st._db.execute("PRAGMA user_version").fetchone()[0] == 20
           and "born_session" in {r[1] for r in st._db.execute(
               "PRAGMA table_info(intents)")}
           and "procedures" in {r[1] for r in st._db.execute(

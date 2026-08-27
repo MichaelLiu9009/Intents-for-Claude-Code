@@ -75,7 +75,7 @@ workspace compiles two kinds of key groups.
 
 | | |
 |---|---|
-| <img src="docs/img/keys/engine.png" width="56" alt="power glyph with status dot"> | **Engine** — tap starts the engine, even a dead one: the launch command is baked into the key. Hold shuts it down. The dot is live engine state. |
+| <img src="docs/img/keys/engine.png" width="56" alt="power glyph with status dot"> | **Engine** — one toggle, status-probed: down, a tap starts it (the launch command is baked into the key, so it revives a dead engine); up, a tap shuts it down. The dot is live engine state. |
 | <img src="docs/img/keys/approve.png" width="56" alt="green check"> | **Solo · Approve** — answers the newest executor card. Always *allow once*: the physical key can never mint a permanent grant. |
 | <img src="docs/img/keys/cancel.png" width="56" alt="red square"> | **Solo · Cancel** — force-stops the newest running order. |
 | <img src="docs/img/keys/intent.png" width="56" alt="orange text key"> | **Your intents** — one orange text key per registered intent. Press to fire it. |

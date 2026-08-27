@@ -51,7 +51,6 @@ surfaces:
 
 ![The hub's engine tab: 'timecheck' pinned on the input line, Enter fires](img/hub.png)
 
-![The Terminal drawer: the seat is a real Claude Code session](img/terminal.png)
 
 ## Creating an intent (talk to the sidecar)
 
@@ -102,8 +101,8 @@ per-press steps are; it will lay out one folder containing:
 The whole booklet registers through one gate: one bad member rejects
 the whole thing (with each problem named), so what goes live is
 always a complete, coherent set. After approval the booklet gets its
-own key group: a **Start** key, one key per member step, and
-**Shutdown**.
+own key group: a **Start / Shutdown** toggle, an **Approve** and an
+**Interrupt** key, one key per member step, and two status dials.
 
 ## Triggering
 
@@ -162,7 +161,7 @@ key face never decorates — it is reserved for status.
 
 | Face | Key | Press |
 |---|---|---|
-| power glyph, status dot | **Engine** (system group) | tap = start — and it revives a dead engine, the launch command is baked into the key; hold = shut the engine down |
+| power glyph, status dot | **Engine** (system group) | one toggle, status-probed: engine down → tap starts it (the launch command is baked into the key, so it revives a dead engine); engine up → tap shuts it down |
 | power glyph | **Start / Shutdown** (booklet group) | one toggle: a closed booklet opens, an open one wraps up; pressing again mid-wrap forces the close |
 | green check | **Approve** | presses Approve on the newest card waiting for you (system group: executor cards; booklet group: that booklet's cards) |
 | yellow square | **Interrupt** | cuts the seat's current turn; the order itself survives |
@@ -212,7 +211,7 @@ workspace. The map:
 │  └─ tasks/<id>/       # one folder per task: order text, materials
 │                       #   (screenshots), approval templates, receipts
 ├─ records/             # session journals (events.jsonl per session)
-├─ toolkit/             # shared read-only tool shelf for all seats
+├─ toolkit/             # shared tool shelf (sidecar curates it; read-only for executor seats)
 └─ utility/             # compiled booklet skills (engine-managed)
 ```
 

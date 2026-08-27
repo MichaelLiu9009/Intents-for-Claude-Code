@@ -180,7 +180,7 @@ XSOLO_MCP_TOOLS = ("task_done", "ask_user", "perm_gate")
 # stays resident, no more fetching the handle via ToolSearch.
 XSOLO_CLI_TOOLS = "Bash,Read,Write,Edit,Glob,Grep"
 XGATE_WAIT_S = 300.0         # perm/form card's wait-for-human cap (same tier as M18 blocking arbitration)
-# §2i seat-count law: min3/max10; interactive's ·启/·收 function words count toward the quota
+# §2i seat-count law: min3/max10; interactive's ·open/·wrap function words count toward the quota
 PROTO_MIN_SEATS = 3
 PROTO_MAX_SEATS = 10
 
@@ -495,7 +495,7 @@ books, the engine waits on you forever.** The work you receive is
 **maintenance-seat work**: surgery (an executor run failed — clean
 the residue, fix the asset), retry brackets (the user isn't
 satisfied — you fulfill directly until they nod), rework diagnosis
-(firing failed / sim not passed), sim QA (the user pressed Sim).
+(firing failed / QA rejected).
 Plain intent orders never come to you — those live on the executor;
 protocol brackets don't either — those live in each booklet's own
 resident seat.
@@ -717,13 +717,13 @@ PROTOCOL_PACKAGE_MD = """\
 
 **You are now in protocol state**: host this multi-round interaction by
 the skill below. Your household brief (CLAUDE.md) carries the bracket
-rules — **opening runs the system ·启 step below and nothing else**
+rules — **opening runs the system ·open step below and nothing else**
 (then greet in one short line at most), member steps are hosted by the
 roster's E sections and claimed with `step_done`, and only the user
-closes the bracket (Shutdown key delivers a system ·收 step first;
+closes the bracket (Shutdown key delivers a system ·wrap step first;
 task_done here is refused).
 
-## Opening step (system ·启 — run BEFORE greeting)
+## Opening step (system ·open — run BEFORE greeting)
 
 {prep}
 
@@ -761,11 +761,11 @@ acceptance: {acceptance}
 """
 PROTO_ROSTER_NONE = "(no members — free-form multi-round)"
 
-# ·启/·收 made real (user ruling 2026-08-24): open/close are **two
+# ·open/·wrap made real (user ruling 2026-08-24): open/close are **two
 # built-in system steps** — the engine auto-delivers them at bracket
 # open/close. prep (opening setup) is declarable in protocol.json;
 # **wrapup is engine-owned** (user ruling 2026-08-26: a declared
-# wrapup smuggled extra ceremony in and blocked shutdown — ·收 is
+# wrapup smuggled extra ceremony in and blocked shutdown — ·wrap is
 # the fixed final-cleanup contract below, closing domain work
 # belongs in a member step the user presses). A user-built member
 # can never occupy these two slots (reserved names are rejected at
@@ -781,9 +781,9 @@ PROTO_WRAP_FINAL = (
     "only what this booklet opened, never shared apps. Flush the "
     "booklet's state to disk where it belongs, then one closing line "
     "to the user")
-PROTO_WRAP_GRACE_S = 45.0     # wrap-up grace period: clock after the ·收 step is delivered, waiting for step_done
+PROTO_WRAP_GRACE_S = 45.0     # wrap-up grace period: clock after the ·wrap step is delivered, waiting for step_done
 PROTO_HOOK_MAX = 800          # word-count gate for prep (×2 for English; same order of magnitude as steps)
-PROTO_RESERVED_MEMBERS = ("·启", "·收", "开启", "结束", "收场",
+PROTO_RESERVED_MEMBERS = ("·open", "·wrap", "开启", "结束", "收场",
                           "prep", "wrapup")
 
 # Failback consolidation ruling (user's second review 2026-08-16,
@@ -937,10 +937,11 @@ this one workflow.
   card when the OPTIONS deserve to be seen as a list; judgments and
   reports go straight to chat.
 - Opening and closing are SYSTEM steps, not members: the opening
-  envelope carries a `·启` step (the booklet's declared prep — run it
-  before greeting), and the Shutdown key first delivers a `·收` step
-  (the booklet's declared wrap-up). Finish `·收` and call
-  `step_done(member="·收")` — the seat closes right after (or after
+  envelope carries a `·open` step (the booklet's declared prep — run it
+  before greeting), and the Shutdown key first delivers a `·wrap` step
+  (the engine's fixed final-cleanup contract — the same for every
+  booklet). Finish `·wrap` and call
+  `step_done(member="·wrap")` — the seat closes right after (or after
   the grace clock; a second Shutdown press forces).
 - Permission dialogs render in this window's terminal drawer; approvals
   the user grants persist in this household — earned trust stays here.
@@ -997,7 +998,7 @@ CANCEL_LINE = ("[chain {cid}] cancelled | the {spec} you initiated has "
                "been cancelled; no further rings will arrive — close "
                "any related waits")
 
-# Debug-diagnosis script (qual·回炉 n0). The original inbound edge =
+# Debug-diagnosis script (qual·rework n0). The original inbound edge =
 # the procedure section's on_fail, already cut loose by the physical-
 # layer ruling (2026-08-16 night: if the physical layer blows up,
 # report to a human, no surgery-return) — the flow stays as a ready-
@@ -1160,9 +1161,11 @@ approve it themselves).
 - `inputs/` — materials. **Substance, not pointers** (a pointer is
   an unpinned dependency — one external move and it fails). No human
   approval needed, but **how each is used must be written below**.
-- `records/` — products and accounts. **Engine-written, read-only
-  for you** — self-certifying material must not be held by the party
-  being certified.
+- `records/` — reserved ledger seat, engine territory (treat as
+  read-only). Session journals live in the workspace-level
+  `records/`; receipts and accounts live in the task ledger —
+  self-certifying material must not be held by the party being
+  certified.
 
 ## How to write the declaration
 
@@ -1276,7 +1279,7 @@ runs through your seat queue, one at a time.
 
 ## The four kinds of work you receive
 
-1. **Surgery** (spec=手术): after an executor failure the user
+1. **Surgery** (spec=surgery): after an executor failure the user
    approves the proposal card — the script carries the failure
    receipt, the user's note, and the residue map (telemetry-bus
    record). You: ① clear residue by the map (half-finished files,
@@ -1305,8 +1308,6 @@ runs through your seat queue, one at a time.
    `workspace_submit`, then `task_done`. Your re-registration raises
    the ordinary registration card; **the user's approval of that
    card is what revives the asset.**
-4. **Sim QA** (validate): test accounting, three-wall discipline
-   rides with the package.
 
 ## The life of one order (debugging background)
 
@@ -1330,9 +1331,9 @@ card waits for approve) / timeout (ruled failed).
   executor's) — don't settle another seat's books.
 - A reply carrying "chain cancelled: settlement received, chain
   stops": normal wind-down, no further rings will arrive.
-- Retry brackets only: "claim received — the bracket stays open":
-  not a refusal — the claim landed; wait for the user's approve or
-  the next round.
+- Retry: `task_done` settles for real (no acceptance round,
+  reshaped 2026-08-25); if the user is still unsatisfied they press
+  retry again and a fresh bracket opens with your record attached.
 
 ## Time limits and cancellation
 
@@ -1534,7 +1535,7 @@ one household per booklet; not you — you only compile):
   at a time within a booklet. Good for: practice companions,
   scripts, continuous work sessions, research that forms a set.
   Seat count 3–10 counting the two system slots (ledger names
-  ·启/·收; 1–8 real members; an empty roster doesn't stand).
+  ·open/·wrap; 1–8 real members; an empty roster doesn't stand).
 - **Writing = declare only the aggregation** (user ruling
   2026-08-16): the skill says **how these members chain together**
   (order, conditions, phrasing) and **never restates any member's

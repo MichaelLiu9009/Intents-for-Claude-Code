@@ -118,7 +118,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     check("00 class retired: submit files nothing -- the row keeps "
           "the fossil column default",
           r.get("ok")
-          and (eng.store.intent("煮面") or {}).get("class") == "未分类")
+          and (eng.store.intent("煮面") or {}).get("class") == "unfiled")
     check("00b flat layout: the workspace lands at root/<name> "
           "(no class shell)",
           (_ws.home(eng) / "煮面" / "intent.json").is_file())

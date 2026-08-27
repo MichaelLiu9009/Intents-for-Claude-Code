@@ -1,11 +1,11 @@
-"""·启/·收 made-real guard (user ruling 2026-08-24) --
+"""·open/·wrap made-real guard (user ruling 2026-08-24) --
 
 Open/close are **two system-native steps**, not members: the
-protocol-open envelope carries a ·启 section (the protocol's
+protocol-open envelope carries a ·open section (the protocol's
 declared prep, defaulting to a greeting/standing-by); Shutdown first
-delivers a ·收 step (the protocol's declared wrapup, defaulting to
+delivers a ·wrap step (the protocol's declared wrapup, defaulting to
 wrapping up whatever is in flight), and only books + closes the seat
-**after** step_done(·收) or the grace clock -- fixing the live
+**after** step_done(·wrap) or the grace clock -- fixing the live
 observation that "close-out just killed the seat outright, with no
 semantic graceful shutdown". Pressing Shutdown again = force;
 engine shutdown cascades into force too. A user-declared member
@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     threading.Thread(target=eng.run, daemon=True).start()
     time.sleep(1.5)
 
-    # ---- 1 . close-out ritual: ·收 goes first, booking + closing the
+    # ---- 1 . close-out ritual: ·wrap goes first, booking + closing the
     #        seat only happens after step_done releases it -----------
     br = eng.store.chain_start("protocol:练琴", issuer="user", intent="练琴")
     inst = LiveInst("练琴")
@@ -112,21 +112,21 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     eng._tokens["ptk"] = defaults.XPROTO_PREFIX + "练琴"
 
     r = eng._proto_shutdown("练琴")
-    check("1a Shutdown posts ·收 step first — the engine-owned "
+    check("1a Shutdown posts ·wrap step first — the engine-owned "
           "final-cleanup contract, the declared wrapup never rides "
           "(user ruling 2026-08-26: a declared one blocked shutdown)",
           r.get("note") == "wrap-up first" and len(inst._steps) == 1
-          and "·收" in inst._steps[0]
+          and "·wrap" in inst._steps[0]
           and "FINAL cleanup" in inst._steps[0]
           and "流水结算落盘" not in inst._steps[0])
-    check("1b Step bar flips to ·收 running",
-          inst.step_name == "·收" and inst.step_state == "running")
+    check("1b Step bar flips to ·wrap running",
+          inst.step_name == "·wrap" and inst.step_state == "running")
     check("1c Mid-ritual: bracket not booked yet (still open)",
           eng._bracket_of("练琴") is not None and "练琴" in eng._wrapping)
     check("1d Seat not killed", inst.stopped == [])
-    ans = eng._mcp_call({"verb": "step_done", "member": "·收",
+    ans = eng._mcp_call({"verb": "step_done", "member": "·wrap",
                          "token": "ptk"})
-    check("1e step_done(·收) accepted (exec-face verb)",
+    check("1e step_done(·wrap) accepted (exec-face verb)",
           ans.get("ok") is True
           or "member" in str(ans))
     done = wait_for(lambda: (eng.store.task(br["id"]) or {})
@@ -159,17 +159,17 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     inst3 = LiveInst("练琴")
     eng._xhosts["练琴"] = inst3
     r = eng._proto_shutdown("练琴", force=True)
-    check("3a force skips ritual (no ·收 posted, books directly)",
+    check("3a force skips ritual (no ·wrap posted, books directly)",
           r.get("note") != "wrap-up first" and inst3._steps == [])
     done = wait_for(lambda: (eng.store.task(br3["id"]) or {})
                     .get("status") == "done" and inst3.stopped)
     check("3b After force: books + closes seat", done is not None)
 
-    # ---- 4 . protocol-open envelope carries a ·启 section (template
+    # ---- 4 . protocol-open envelope carries a ·open section (template
     #        slot) ------------------------------------------------------
     check("4a PROTOCOL_PACKAGE_MD has a {prep} slot",
           "{prep}" in defaults.PROTOCOL_PACKAGE_MD
-          and "·启" in defaults.PROTOCOL_PACKAGE_MD)
+          and "·open" in defaults.PROTOCOL_PACKAGE_MD)
     body = defaults.PROTOCOL_PACKAGE_MD.format(
         name="练琴", tid=1, input="(none)", members="a",
         prep="读册内态,报上次练到哪", roster="-", skill="s")
@@ -177,9 +177,9 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           "读上次练到哪" in body
           or "读册内态" in body)
 
-    # ---- 5 . reserved slots: a user member cannot occupy ·启/·收 -------
-    check("5a Reserved-name roster complete (·启/·收/开启/结束/收场)",
-          {"·启", "·收", "开启", "结束", "收场"}
+    # ---- 5 . reserved slots: a user member cannot occupy ·open/·wrap -------
+    check("5a Reserved-name roster complete (·open/·wrap/开启/结束/收场)",
+          {"·open", "·wrap", "开启", "结束", "收场"}
           <= set(defaults.PROTO_RESERVED_MEMBERS))
 
     # ---- 6 . draining + teardown sped up (pending order 2026-08-24) ---
@@ -190,7 +190,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                                 intent="画画")
     inst6 = LiveInst("画画")
     eng._xhosts["画画"] = inst6
-    eng._proto_shutdown("画画")     # ·收 ritual opens -> _wrapping
+    eng._proto_shutdown("画画")     # ·wrap ritual opens -> _wrapping
     ps6 = eng._on_trigger({"protocol": "画画", "op": "status"})
     check("6b Mid-ritual op=status reports draining (word + flag)",
           ps6.get("status") == "draining" and ps6.get("draining") is True)

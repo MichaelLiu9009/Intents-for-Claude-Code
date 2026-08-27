@@ -174,9 +174,9 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     # seat), task_done landing on the bracket -> hard-rejected
     # (CASELAW 46)----
     qinst = fake_instance(eng, ws_root, "练琴")
-    eng._on_intent("练琴·启", "开册")
+    eng._on_intent("练琴·open", "开册")
     br = wait_for(lambda: eng._bracket_of("练琴", queued=False))
-    check("1a ·启 opens the bracket right away (delivered to the "
+    check("1a ·open opens the bracket right away (delivered to the "
           "x·练琴 instance seat)", br is not None
           and br.get("executor") == "x·练琴")
     envp = wait_for(lambda: next(
@@ -324,11 +324,11 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
           "new not-delivered cards throughout",
           not eng._inject_watch and _lost_ids() == before_lost2)
 
-    # ---- 4. ·收 closes the bracket as normal (the closing receipt
+    # ---- 4. ·wrap closes the bracket as normal (the closing receipt
     # goes to the instance)----
-    eng._on_intent("练琴·收", "收工")
+    eng._on_intent("练琴·wrap", "收工")
     closed = wait_for(lambda: eng._bracket_of("练琴") is None)
-    check("5a ·收 settles the ledger, bracket closes", bool(closed))
+    check("5a ·wrap settles the ledger, bracket closes", bool(closed))
     endnote = wait_for(lambda: any(
         "protocol 练琴 end" in x for x in qinst.host.sent))
     check("5b closing receipt lands on the instance (just wraps "

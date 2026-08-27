@@ -224,16 +224,39 @@ def _seed(ws_root: Path) -> int:
     # ALWAYS refreshes their rows to the current template text (the
     # upgrade path after a word-list change — no legacy fallback).
     st = Store(ws_root / "state.db")
-    if st.intent("timecheck") is None:
-        st.intent_create("timecheck", title=TPL_TIMECHECK["title"],
+    # Collision guard (audit 2026-08-26): templates are engine
+    # property and re-seeding always refreshes THEM — but a USER
+    # asset that happens to share a template's name must never be
+    # silently overwritten. Engine property is marked scope='seed'
+    # (a column the MCP revision channel can never write), so the
+    # distinction is mechanical, not guesswork.
+    row = st.intent("timecheck")
+    if row is not None and (row.get("scope") or "") != "seed":
+        print("seed: skipped 'timecheck' — a user asset already "
+              "owns that name (rename it and re-run seed to get "
+              "the template).")
+    else:
+        if row is None:
+            st.intent_create("timecheck", title=TPL_TIMECHECK["title"],
+                             scenario=TPL_TIMECHECK["scenario"],
+                             steps=TPL_TIMECHECK["steps"], fires=1,
+                             scope="seed")
+        st.intent_revise("timecheck", status="provisioned",
+                         title=TPL_TIMECHECK["title"],
                          scenario=TPL_TIMECHECK["scenario"],
-                         steps=TPL_TIMECHECK["steps"], fires=1)
-    st.intent_revise("timecheck", status="provisioned",
-                     title=TPL_TIMECHECK["title"],
-                     scenario=TPL_TIMECHECK["scenario"],
-                     steps=TPL_TIMECHECK["steps"],
-                     instructions=TPL_TIMECHECK["acceptance"])
-    st.compile_delivery("timecheck")
+                         steps=TPL_TIMECHECK["steps"],
+                         instructions=TPL_TIMECHECK["acceptance"],
+                         scope="seed")
+        st.compile_delivery("timecheck")
+    pr = st.proto_get("translator")
+    if pr is not None and sorted(pr.get("members") or [])             != sorted([TPL_LANGUAGE["name"], TPL_TRANSLATE["name"]]):
+        print("seed: skipped 'translator' — an existing booklet by "
+              "that name has a different roster (yours); rename it "
+              "and re-run seed to get the template.")
+        st.close()
+        print("seeded: timecheck refreshed where engine-owned; "
+              "translator left untouched.")
+        return 0
     st.proto_stage("translator", subtype="interactive",
                    scenario=TPL_PROTO["scenario"],
                    staged_hash=text_hash(TPL_SKILL))

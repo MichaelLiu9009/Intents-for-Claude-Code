@@ -4,7 +4,7 @@ slimming).
 The former second half (pure procedure-chain self-handling /
 firing-failed rework loop) has fully retired along with the v16
 physical-layer ruling (user's call, night of 2026-08-16): procedure =
-engine-builtin key binding, not part of the delivery chain; qual·回炉
+engine-builtin key binding, not part of the delivery chain; qual·rework
 currently has no inbound edge (left for future wiring when E-layer
 failures are hooked up -- at that point the rework-loop guard should
 be restored here).

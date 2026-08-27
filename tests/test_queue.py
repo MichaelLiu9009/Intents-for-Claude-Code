@@ -155,10 +155,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:   # Windows
              and (not_id is None or t["id"] != not_id)), None)
 
     # ---- 0 tier naming, and rework/retry belong to the error tier -----
-    check("0 §2h retry / qual·回炉 belongs to error tier (surgery"
+    check("0 §2h retry / qual·rework belongs to error tier (surgery"
           " family)",
           eng.store.spec("retry")["priority"] == defaults.PRIORITY_ERROR
-          and eng.store.spec("qual·回炉")["priority"]
+          and eng.store.spec("qual·rework")["priority"]
           == defaults.PRIORITY_ERROR
           and defaults.PRIORITY_EXEC == 0
           and defaults.PRIORITY_INTERNAL == 3)

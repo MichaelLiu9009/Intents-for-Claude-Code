@@ -174,7 +174,7 @@ PROTO_SCHEMA: dict = {
         # booklet doesn't stand up); schema only governs shape
         "required": False, "kind": "names", "max": 10,
         "desc": "member roster (3–10 counting the two system slots "
-                "·启/·收, i.e. 1–8 real members). **v17 compile unit "
+                "·open/·wrap, i.e. 1–8 real members). **v17 compile unit "
                 "(user ruling 2026-08-16 late night)**: member "
                 "declarations travel with the booklet — each name "
                 "maps to members/<name>/intent.json (same schema "
@@ -186,19 +186,19 @@ PROTO_SCHEMA: dict = {
                 "stateful situational interaction. **Opening/closing "
                 "are not members** (reserved names are rejected at "
                 "registration): opening content goes in prep; "
-                "closing (·收) is the engine's fixed final-cleanup "
+                "closing (·wrap) is the engine's fixed final-cleanup "
                 "contract, not declarable — closing domain work "
                 "belongs in a member step the user presses."},
     "prep": {
         "required": False, "kind": "text",
         "max": defaults.PROTO_HOOK_MAX,
-        "desc": "content of the ·启 system step (opening setup, E "
+        "desc": "content of the ·open system step (opening setup, E "
                 "prose): auto-delivered by the engine at bracket "
                 "open; the seat runs it before greeting — e.g. read "
                 "the booklet's state and report where we left off, "
                 "pre-warm today's material. Empty = default (one "
                 "greeting line, then stand by)."},
-    # wrapup left the schema (user ruling 2026-08-26): ·收 is
+    # wrapup left the schema (user ruling 2026-08-26): ·wrap is
     # engine-owned — the fixed final-cleanup contract
     # (defaults.PROTO_WRAP_FINAL); closing domain work belongs in a
     # member step the user presses. The validate() tail gives a
@@ -540,10 +540,10 @@ def validate(decl: dict, kind: str = "intent") -> list[str]:
     if "wrapup" in unknown:
         # Teaching refusal, not a generic unknown (user ruling
         # 2026-08-26): declared wrapups used to be legal and one
-        # blocked shutdown — the field is retired, ·收 is the
+        # blocked shutdown — the field is retired, ·wrap is the
         # engine's fixed final-cleanup contract.
         unknown.remove("wrapup")
-        probs.append("`wrapup` is engine-owned now: ·收 delivers the "
+        probs.append("`wrapup` is engine-owned now: ·wrap delivers the "
                      "fixed final-cleanup contract and the session "
                      "shuts down on the grace clock right after — "
                      "delete the field; closing domain work belongs "
@@ -560,13 +560,24 @@ def _is_word(s: str) -> bool:
     return bool(s) and all(ch.isalnum() or ch == "_" for ch in s)
 
 
+_WIN_RESERVED = {"con", "prn", "aux", "nul",
+                 *(f"com{i}" for i in range(1, 10)),
+                 *(f"lpt{i}" for i in range(1, 10))}
+
+
 def _is_phrase(s: str) -> bool:
     """Name rule (user ruling 2026-08-26): a word or a short phrase —
-    \\w runs joined by single spaces or hyphens. Dots and path
+    backslash-w runs joined by single spaces or hyphens. Dots and path
     separators stay impossible (the name doubles as a directory
-    name; the path-escape audit of 2026-08-25 still holds)."""
-    return bool(s) and _is_word(s[0]) and _is_word(s[-1]) and all(
-        ch.isalnum() or ch in "_ -" for ch in s)
+    name; the path-escape audit of 2026-08-25 still holds).
+
+    Windows reserved device names refused too (audit 2026-08-26:
+    'nul' passed the gate, broke provisioning mid-way, and left a
+    permanently stuck draft row — the store row lands before the
+    directory write that explodes)."""
+    return (bool(s) and _is_word(s[0]) and _is_word(s[-1])
+            and all(ch.isalnum() or ch in "_ -" for ch in s)
+            and s.strip().lower() not in _WIN_RESERVED)
 
 
 # ---- Resolve files by declaration: existence + hash (proof of effect) ----

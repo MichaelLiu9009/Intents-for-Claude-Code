@@ -64,8 +64,8 @@
 | `E_VERBS` / `E_COND_MAX` / `E_GRAMMAR` | table / 80 / grammar string | E pseudo-code verb allowlist (with per-verb content budgets) / condition length cap / line grammar |
 | `PROTO_MIN_SEATS` / `PROTO_MAX_SEATS` | 3 / 10 | booklet member-count law (min/max) |
 | `PROTO_SKILL_MAX` | 20_000 | booklet skill body cap (the human approves the full text) |
-| `PROTO_HOOK_MAX` | 800 | prep / wrapup (·启/·收 content) caps, each |
-| `PROTO_RESERVED_MEMBERS` | ·启 ·收 开启 结束 收场 prep wrapup | reserved names — opening/closing are system steps; user members may not occupy them |
+| `PROTO_HOOK_MAX` | 800 | prep / wrapup (·open/·wrap content) caps, each |
+| `PROTO_RESERVED_MEMBERS` | ·open ·wrap 开启 结束 收场 prep wrapup | reserved names — opening/closing are system steps; user members may not occupy them |
 | `PROTO_TOTAL_MAX` | 50 | library-wide booklet cap |
 | `MAX_HOME_INTENTS` | 200 | registered-intent cap per home |
 
@@ -95,7 +95,7 @@
 | `TASK_TIMEOUT_S` | 15 min | a task with no settlement times out (bracket tasks are exempt — brackets eat no clock) |
 | `MAX_NODE_VISITS` | 4 | per-node revisit cap within a chain (surgery/rework loop guard) |
 | `PROTO_EXIT_GRACE_S` | 6.0 | booklet close: ESC + /exit grace, then tree-kill fallback |
-| `PROTO_WRAP_GRACE_S` | 45.0 | ·收 closing ceremony: wait for step_done before settling (press again = force) |
+| `PROTO_WRAP_GRACE_S` | 45.0 | ·wrap closing ceremony: wait for step_done before settling (press again = force) |
 | `PROC_TIMEOUT_S` / `PROC_SAY_MAX` | 30 / 4000 chars | procedure preludes: per-step hard timeout (tree-kill) / per-item material size gate |
 | `HOOK_TIMEOUT_S` | 5 | timeout for hooks in settings.json |
 

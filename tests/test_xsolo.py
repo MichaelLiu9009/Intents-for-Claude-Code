@@ -219,7 +219,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                        "action": "surgery", "data": str(t2["id"])}))
     s1 = wait_for(lambda: next(
         (t for t in eng.store.tasks_recent(40)
-         if t.get("spec") == "手术" and t["status"] == "running"), None))
+         if t.get("spec") == "surgery" and t["status"] == "running"), None))
     spkg = (ws_root / "runtime" / "tasks" / str(s1["id"])
             / "package.md").read_text(encoding="utf-8")
     check("8 §2m v9 surgery script swap: standalone intent "

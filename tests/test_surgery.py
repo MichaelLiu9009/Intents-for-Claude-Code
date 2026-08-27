@@ -167,11 +167,11 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     card = frame_where(lambda f: f.get("type") == "card"
                        and "Executor failed" in str(f.get("title")))
     check("2 §2g failed lane: auto debug proposal card (with a "
-          "手术 option), no auto-opening the table",
+          "surgery option), no auto-opening the table",
           card is not None
           and any(o.get("action") == "surgery"
                   for o in card.get("options", []))
-          and not any(t.get("spec") == "手术"
+          and not any(t.get("spec") == "surgery"
                       for t in eng.store.tasks_recent(40)))
     # audit 2026-08-25: this card carries the ONLY entry into
     # surgery, so it must be sweep-immune — as an `ask` card the
@@ -188,15 +188,15 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                        "action": "surgery", "data": str(t1["id"])}))
     s1 = wait_for(lambda: next(
         (t for t in eng.store.tasks_recent(40)
-         if t.get("spec") == "手术" and t["status"] == "running"), None))
-    check("3 §2g approve opens the table: 手术 ticket delivered "
+         if t.get("spec") == "surgery" and t["status"] == "running"), None))
+    check("3 §2g approve opens the table: surgery ticket delivered "
           "to sidecar (error queue)",
           s1 is not None
           and s1["priority"] == defaults.PRIORITY_ERROR
           and s1["origin"] == t1["id"])
     pkg = (ws_root / "runtime" / "tasks" / str(s1["id"])
            / "package.md").read_text(encoding="utf-8")
-    check("4 §2g 手术 table carries a residue map (bus transcript) "
+    check("4 §2g surgery table carries a residue map (bus transcript) "
           "+ failure receipt + ignition note "
           "(v14: fix-intent script, English)",
           "半成品.md" in pkg and "缺 Edit 权限" in pkg
@@ -205,7 +205,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     # ---- suspension lock (single intent) + other intents unaffected ---
     c.send(json.dumps({"type": "intent", "name": "报时", "input": ""}))
     said = chat_where("under surgery")
-    check("5 §2g suspension lock: intent under 手术 refuses to "
+    check("5 §2g suspension lock: intent under surgery refuses to "
           "fire, plus a signpost",
           said is not None
           and solo_task("queued", intent="报时") is None)
@@ -237,15 +237,15 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     card2 = frame_where(lambda f: f.get("type") == "card"
                         and "Executor failed" in str(f.get("title")))
     check("7 §2g fails again, back to the human: another "
-          "proposal card waits on a person, no automatic re-手术",
+          "proposal card waits on a person, no automatic re-surgery",
           card2 is not None
-          and not any(t.get("spec") == "手术"
+          and not any(t.get("spec") == "surgery"
                       and t["status"] in ("queued", "running")
                       for t in eng.store.tasks_recent(40)))
 
     # ---- retry lane (reshaped 2026-08-25): a retry on a failed task
     # opens a retry order on sidecar -----------------------------------
-    # (sidecar autopsies + redoes directly, no 手术 auto-open;
+    # (sidecar autopsies + redoes directly, no surgery auto-open;
     # surgery is now reachable only through the failed card)
     c.send(json.dumps({"type": "retry", "task": t2["id"],
                        "reason": "先清残留,再把权限写进 steps"}))
@@ -255,10 +255,10 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     pkg2 = (ws_root / "runtime" / "tasks" / str(rb["id"])
             / "package.md").read_text(encoding="utf-8")
     check("8 retry lane: opens a retry order delivered to "
-          "sidecar (no 手术 opened), note travels with the script",
+          "sidecar (no surgery opened), note travels with the script",
           rb is not None and rb["executor"] == "sidecar"
           and "Autopsy" in pkg2 and "先清残留" in pkg2
-          and not any(t.get("spec") == "手术"
+          and not any(t.get("spec") == "surgery"
                       and t["status"] in ("queued", "running")
                       for t in eng.store.tasks_recent(40)))
 
@@ -282,14 +282,14 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
                        "action": "surgery", "data": str(t2["id"])}))
     s2 = wait_for(lambda: next(
         (t for t in eng.store.tasks_recent(40)
-         if t.get("spec") == "手术" and t["status"] == "running"
+         if t.get("spec") == "surgery" and t["status"] == "running"
          and t["id"] != s1["id"]), None))
     defaults.TASK_TIMEOUT_S = 3
     aborted = wait_for(lambda: eng.store.task(s2["id"])["status"]
                        == "failed", timeout=20)
     noti = frame_where(lambda f: f.get("type") == "card"
                        and "Surgery incomplete" in str(f.get("title")), 10)
-    check("10 §2g 手术 timeout: aborted card goes back to the "
+    check("10 §2g surgery timeout: aborted card goes back to the "
           "human, no replay",
           bool(aborted) and noti is not None
           and solo_task("running", intent="报时",
