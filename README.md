@@ -55,6 +55,10 @@ Open the bracket, run member steps from keys; it remembers, across sessions.</em
   own account, in the CLI's own permission mode. The engine owns only
   the deny floor — and it never presses an authorization key for you.
 
+The stance behind all four — why control must live outside the
+reasoning realm, and why the unit of governance is the boundary, not
+the approval click — is written out in **[the design memo](docs/MEMO.md)**.
+
 ## Install
 
 **v0.1.0 (M26 baseline)** — Windows · Python ≥ 3.12 ·
@@ -76,6 +80,7 @@ uninstall are walked through in **[docs/SETUP.md](docs/SETUP.md)**.
 | Document | Purpose |
 |---|---|
 | [docs/DEMO.md](docs/DEMO.md) | **The full walkthrough on video**: a booklet minted from one sentence, used from the deck, revised the same way |
+| [docs/MEMO.md](docs/MEMO.md) | **The design memo**: control from the outside — agents governed by boundary shapes, not approval clicks; why this project exists |
 | [docs/SETUP.md](docs/SETUP.md) | **Install & first run**: requirements, first-run authorization, cost knobs, cold-start templates, uninstall |
 | [docs/GUIDE.md](docs/GUIDE.md) | **The user guide — start here**: creating intents & booklets, triggering, Stream Deck binding, the folder map, troubleshooting |
 | [docs/SECURITY.md](docs/SECURITY.md) | **The security model**: loopback-only network face, minted agent identity, the deny floor |
