@@ -7,3 +7,5 @@ state.db*
 *.egg-info/
 build/
 dist/
+*.db-shm
+*.db-wal
