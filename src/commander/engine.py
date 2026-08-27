@@ -3123,6 +3123,22 @@ class Engine:
                     self.journal.row("protocol", "orphan-gate",
                                     intent=name, task=t["id"])
                     return
+                # Same law as retire (live-fire 2026-08-27, the
+                # revision half of the TOCTOU family): approving a
+                # new revision while rev1's bracket is OPEN would
+                # swap the roster under a live seat mid-session —
+                # the seat keeps teaching the old skill, dropped
+                # members' keys die mid-bracket. Shutdown first.
+                if (prow.get("status") == "provisioned"
+                        and self._bracket_of(name) is not None):
+                    self.journal.row("protocol", "revise-refused",
+                                    intent=name, reason="bracket-open")
+                    self._say_engine(
+                        f"Booklet '{name}' NOT recompiled: its "
+                        f"bracket is open. Shutdown the booklet, "
+                        f"then workspace_submit again — the staged "
+                        f"copy is kept, a fresh card will rise.")
+                    return
                 mdecls: list = []
                 mj = sdir / "members.json"
                 if mj.is_file():

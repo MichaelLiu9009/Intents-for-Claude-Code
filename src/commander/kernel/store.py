@@ -1488,6 +1488,20 @@ class Store:
                         " last_touched=? WHERE name=?",
                         (*vals, prcs, name, f"protocol:{name}", _now(),
                          _now(), m))
+            # Roster swap retires the dropped (live-fire 2026-08-27:
+            # a rev2 with a different member set left rev1's members
+            # provisioned and stamped — six live rows against a
+            # three-name roster, zombies no surface would ever clean).
+            # Soft law: status flips, the proto stamp stays (history),
+            # and the reconcile orphan-check already exempts retired.
+            new_names = {d["name"] for d in member_decls}
+            for r in self._db.execute(
+                    "SELECT name FROM intents WHERE proto=? "
+                    "AND status='provisioned'", (name,)).fetchall():
+                if r["name"] not in new_names:
+                    self._db.execute(
+                        "UPDATE intents SET status='retired', "
+                        "updated_at=? WHERE name=?", (_now(), r["name"]))
         return self.proto_get(name)
 
     def reconcile(self, utility_root: Path) -> list[str]:

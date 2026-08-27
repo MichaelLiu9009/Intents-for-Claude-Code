@@ -328,6 +328,37 @@ with tempfile.TemporaryDirectory() as tmp:
           "directory on power-on",
           (ws_root / "toolkit").is_dir())
 
+    # ---- roster swap + revision-while-open (live-fire 2026-08-27) ----
+    _ws.put_member(eng, "观察", _ws.member_decl("观星", scenario="看星"))
+    _ws.set_members(eng, "观察", ["观云", "观星"])       # 观鸟 dropped
+    r = _ws.register(post, "观察")
+    # 14b: approving a revision while the bracket is OPEN is refused
+    o14 = ProtoInstance("观察", ws_root / "instances" / "x·观察",
+                        "sonnet", spawn=False)
+    o14.host = FakeHost(); o14._spawned = True
+    eng._xhosts["观察"] = o14
+    eng._on_intent("观察·open", "")
+    br14 = wait_for(lambda: eng._bracket_of("观察"))
+    c.send(json.dumps({"type": "approve", "task": r["task"]}))
+    time.sleep(1.2)
+    still = (eng.store.proto_get("观察") or {}).get("members")
+    check("14b revision gate re-checks the bracket at approval "
+          "(TOCTOU family, retire's sibling): open bracket -> "
+          "recompile refused, roster unchanged",
+          bool(br14) and "观星" not in (still or []))
+    eng._proto_close("观察", by="test")
+    r = _ws.register(post, "观察")
+    c.send(json.dumps({"type": "approve", "task": r["task"]}))
+    ok14c = wait_for(lambda: "观星" in ((eng.store.proto_get("观察")
+                                        or {}).get("members") or []))
+    check("14c roster swap retires the dropped member: 观鸟 flips "
+          "to retired (proto stamp kept, soft law), no zombie "
+          "provisioned row survives the recompile",
+          bool(ok14c)
+          and (eng.store.intent("观鸟") or {}).get("status") == "retired"
+          and (eng.store.intent("观鸟") or {}).get("proto") == "观察"
+          and (eng.store.intent("观星") or {}).get("status") == "provisioned")
+
     # ---- M26 seat idempotent routing (the new shape of
     #      lock-on-entry) + loners still go through the executor
     #      seat -----------
