@@ -65,6 +65,36 @@ Open the bracket, run member steps from keys; it remembers, across sessions.</em
 
 </div>
 
+## The default keyset
+
+Control ships as physical keys with a fixed face grammar: **graphics
+are system keys, text faces are your assets, color is state.** Every
+workspace compiles two kinds of key groups:
+
+**IntentOS — the system group** (one per workspace)
+
+| Face | Key | What it does |
+|---|---|---|
+| power glyph · status dot | **Engine** | tap starts the engine — even a dead one, the launch command is baked into the key; hold shuts it down |
+| green check | **Solo · Approve** | answers the newest executor card — always *allow once*; the physical key can never mint a permanent grant |
+| red square | **Solo · Cancel** | force-stops the newest running order |
+| orange text faces | *your intents* | one key per registered intent — press to fire it |
+| dials: **Status** · **Task** | | read-only touch-strip bars: engine up/down, and the newest in-flight order with its state color |
+
+**Per booklet — one group each** (compiled the moment you approve it)
+
+| Face | Key | What it does |
+|---|---|---|
+| power glyph | **Start / Shutdown** | one toggle: a closed booklet opens, an open one wraps up; pressing again mid-wrap forces the close |
+| green check | **Approve** | that booklet's newest waiting card |
+| yellow square | **Interrupt** | cuts the seat's current turn; the order itself survives |
+| dark text faces | *member steps* | one key per member — press to run that step |
+| dials: **Status** · **Step** | | open/closed + seat liveness · the step now running |
+
+<p align="center"><img src="docs/img/deck-keys.png" width="560" alt="The two default key groups in the Stream Deck sidebar: IntentOS system keys and a booklet's group"></p>
+<p align="center"><em>Both groups as they appear in the Stream Deck app — drag onto any page.
+Binding flow and the full face grammar: <a href="docs/GUIDE.md">the user guide</a>.</em></p>
+
 ## Install
 
 **v1.0.0** — Windows · Python ≥ 3.12 ·
