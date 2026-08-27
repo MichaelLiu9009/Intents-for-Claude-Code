@@ -592,6 +592,16 @@ class Engine:
                 instance=seat)
             self.journal.row("protocol", "refused", intent=pname,
                             reason="step-open", member=member)
+            # The host seat hears about the drop too (user ruling
+            # 2026-08-26): without this nudge it has no idea a key
+            # bounced, and no urgency to claim.
+            if inst0.alive():
+                inst0.enqueue(
+                    f"[task {br['id']}] note | member key '{member}' "
+                    f"was dropped — the ongoing step ('{busy}') is "
+                    f"still unclaimed. Finish it and claim "
+                    f"(step_done); member keys stay refused until "
+                    f"you do.")
             return {"error": "previous step still open"}
         self._touch(member, defaults.SCORE_TRIGGER)
         self.journal.row("protocol", "step", intent=pname,

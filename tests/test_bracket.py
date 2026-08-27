@@ -227,8 +227,13 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
     check("1f0 member key while the previous step is unclaimed → "
           "refused, zero envelope",
           "still open" in str(r.get("error") or "")
-          and not any("intent 陪聊" in x
+          and not any("intent 陪聊" in x and "step" in x
                       for x in qinst.host.sent[n1b:]))
+    nudge = wait_for(lambda: any(
+        "was dropped" in x and "step_done" in x
+        for x in qinst.host.sent[n1b:]))
+    check("1f0b the host seat hears about the drop (nudge to claim "
+          "lands on the instance)", bool(nudge))
     qinst.step_state = "done"          # the claim (step_done's effect)
 
     # second member, same law
