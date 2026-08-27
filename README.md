@@ -11,7 +11,9 @@ assets. From then on, it's a button.
 
 </div>
 
-> ⬇ replace this line with the uploaded URL of `readme-hero-engine-start.mp4`
+https://github.com/user-attachments/assets/8c613238-772f-41e1-84ef-ea72fb4f7dcc
+
+
 
 <p align="center"><em>One tap on a real key. The engine wakes, opens its hub, and reports in.</em></p>
 
@@ -19,12 +21,16 @@ assets. From then on, it's a button.
 
 Each of these was described once, in conversation. Now it's a button.
 
-> ⬇ replace this line with the uploaded URL of `readme-hero-dashboard.mp4`
+https://github.com/user-attachments/assets/40f5e18e-5c60-4a01-b463-6cc76424341c
+
+
 
 <p align="center"><em>An <b>intent</b> — a stateless order. One press: a live market
 dashboard, fetched and assembled by a headless executor seat, receipt included.</em></p>
 
-> ⬇ replace this line with the uploaded URL of `readme-hero-guitar.mp4`
+https://github.com/user-attachments/assets/a161dad7-0ffc-419d-92d0-1bdd7aa95391
+
+
 
 <p align="center"><em>A <b>booklet</b> — a stateful session with its own resident seat.
 Open the bracket, run member steps from keys; it remembers, across sessions.</em></p>
